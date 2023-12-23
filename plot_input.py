@@ -35,13 +35,13 @@ parser = argparse.ArgumentParser(
     formatter_class=argparse.RawDescriptionHelpFormatter,
     parents=[parser])
 parser.add_argument(
-    'channels', type=int, default=[1], nargs='*', metavar='CHANNEL',
+    'channels', type=int, default=[1,2], nargs='*', metavar='CHANNEL',
     help='input channels to plot (default: the first)')
 parser.add_argument(
     '-d', '--device', type=int_or_str,
     help='input device (numeric ID or substring)')
 parser.add_argument(
-    '-w', '--window', type=float, default=200, metavar='DURATION',
+    '-w', '--window', type=float, default=400, metavar='DURATION',
     help='visible time slot (default: %(default)s ms)')
 parser.add_argument(
     '-i', '--interval', type=float, default=30,
@@ -51,7 +51,7 @@ parser.add_argument(
 parser.add_argument(
     '-r', '--samplerate', type=float, help='sampling rate of audio device')
 parser.add_argument(
-    '-n', '--downsample', type=int, default=10, metavar='N',
+    '-n', '--downsample', type=int, default=1, metavar='N',
     help='display every Nth sample (default: %(default)s)')
 args = parser.parse_args(remaining)
 if any(c < 1 for c in args.channels):
@@ -91,7 +91,9 @@ def update_plot(frame):
 
 try:
     if args.samplerate is None:
+        
         device_info = sd.query_devices(args.device, 'input')
+        print(device_info)
         args.samplerate = device_info['default_samplerate']
 
     length = int(args.window * args.samplerate / (1000 * args.downsample))
