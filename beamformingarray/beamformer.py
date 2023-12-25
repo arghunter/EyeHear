@@ -1,6 +1,8 @@
 
 import numpy as np
-
+from AudioWriter import AudioWriter
+from IOStream import IOStream
+from Preprocessor import Preprocessor
 v=340.3 # speed of sound at sea level m/s
     
 class Beamformer:
@@ -12,9 +14,18 @@ class Beamformer:
         self.gains = np.ones(n_channels) # multiplier
         self.sample_dur= 1/sample_rate *10**6 #Duration of a sample in microseconds
     def beamform(self,samples):
+        # print(samples.shape[0])
+        
         samples,max_sample_shift=self.delay_and_gain(samples)
+        # print(max_sample_shift)
         samples=self.sum_channels(samples)
-        return samples,max_sample_shift
+        if hasattr(self,'last_overlap'):
+            for i in range(self.last_overlap.shape[0]):
+                samples[i]+=self.last_overlap[i]
+        
+        self.last_overlap=samples[samples.shape[0]-max_sample_shift:samples.shape[0]]
+        # print(self.last_overlap.shape[0])
+        return samples[0:samples.shape[0]-max_sample_shift]
     
     def sum_channels(self,samples):
         summed=np.zeros(samples.shape[0])
@@ -46,13 +57,28 @@ class Beamformer:
         self.delays+=-shift
     def update_gains(self,doa):
         pass
-beam = Beamformer(4)
-beam.update_delays(80)
-arr=np.zeros((20,4))
-for i in range (20):
-    arr[i][0]=i+1
-    arr[i][1]=i+1
-    arr[i][2]=i+1
-    arr[i][3]=i+1
-res=beam.delay_and_gain(arr)
-print(res)
+    
+    
+
+beam = Beamformer(8)
+# beam.update_delays(0)
+io=IOStream()
+writer= AudioWriter()
+io.wavToStream("./beamformingarray/test4.wav")
+pre=Preprocessor()
+for i in range(300):
+    writer.add_sample(beam.beamform(pre.process(io.getNextSample())))
+    # print(type(io.getNextSample()))
+    
+writer.write("./beamformingarray/test4res3.wav",48000)   
+# print(res)
+# beam = Beamformer(4)
+# beam.update_delays(80)
+# arr=np.zeros((20,4))
+# for i in range (20):
+#     arr[i][0]=i+1
+#     arr[i][1]=i+1
+#     arr[i][2]=i+1
+#     arr[i][3]=i+1
+# res,temp=beam.beamform(arr)
+# print(res)

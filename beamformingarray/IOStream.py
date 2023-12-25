@@ -54,11 +54,11 @@ class IOStream: #sample duration in microseconds
 sd.default.device=18
 io= IOStream()
 io.streamAudio(48000,16)
-# io.wavToStream("./beamformingarray/output.wav")
+# io.wavToStream("./beamformingarray/test1.wav")
 writer= AudioWriter()
-for i in range(400):
+for i in range(300):
     # print(type(io.getNextSample()))
     writer.add_sample(io.getNextSample())
 # print(io.arr.shape)
 # print(writer.data.shape)
-writer.write("./beamformingarray/output2.wav",48000)   
+writer.write("./beamformingarray/test4.wav",48000)   
