@@ -13,5 +13,7 @@ class AudioWriter:
             # print('x')
             self.data= np.concatenate([self.data,samples])
     def write(self,fileName,frequency):
+        mx=self.data.max()
+        self.data/=mx
         write(fileName, frequency, self.data)
         

@@ -61,16 +61,16 @@ class Beamformer:
     
 
 beam = Beamformer(8)
-# beam.update_delays(0)
+beam.update_delays(10)
 io=IOStream()
 writer= AudioWriter()
-io.wavToStream("./beamformingarray/test1.wav")
-pre=Preprocessor()
-for i in range(300):
-    writer.add_sample(beam.beamform(pre.process(io.getNextSample())))
+io.wavToStream("./beamformingarray/gentest5.wav")
+pre=Preprocessor(mirrored=False)
+for i in range(100):
+    writer.add_sample((beam.delay_and_gain(pre.process(io.getNextSample())))[0])
     # print(type(io.getNextSample()))
     
-writer.write("./beamformingarray/test1res2.wav",48000)   
+writer.write("./beamformingarray/gentest5res1.wav",48000)   
 # print(res)
 # beam = Beamformer(4)
 # beam.update_delays(80)
