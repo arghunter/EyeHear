@@ -15,12 +15,12 @@ class Signal: #delay in microseconds
 class Sine(Signal):
     
     def __init__(self, samplerate, delay,amp=1,length=1,period=1):
-        data=amp* np.sin(2*np.pi*period*samplerate*np.linspace(0, length, length * samplerate, dtype=np.float32)[0:4800])
+        data=amp* np.sin(2*np.pi*period*samplerate*np.linspace(0, length, length * samplerate, dtype=np.float32))
         super().__init__(data, samplerate, delay)
 
 class Square(Signal):
     def __init__(self, samplerate, delay,amp=1,length=1,period=1):
-        data=amp * signal.square(2*np.pi*period*samplerate*np.linspace(0, length, length * samplerate, dtype=np.float32)[0:4800])
+        data=amp * signal.square(2*np.pi*period*samplerate*np.linspace(0, length, length * samplerate, dtype=np.float32))
         super().__init__(data, samplerate, delay)
         
                 

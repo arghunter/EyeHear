@@ -3,6 +3,7 @@ import numpy as np
 from AudioWriter import AudioWriter
 from IOStream import IOStream
 from Preprocessor import Preprocessor
+from time import time
 v=340.3 # speed of sound at sea level m/s
     
 class Beamformer:
@@ -60,17 +61,20 @@ class Beamformer:
     
     
 
-beam = Beamformer(8,spacing=10)
+beam = Beamformer(8,spacing=10,sample_rate=8*48000)
 beam.update_delays(45)
 io=IOStream()
 writer= AudioWriter()
-io.wavToStream("./beamformingarray/gentest9.wav")
-pre=Preprocessor(mirrored=False)
+io.wavToStream("./beamformingarray/gentest10.wav")
+pre=Preprocessor(mirrored=False,interpolate=8)
+
 for i in range(100):
-    writer.add_sample((beam.beamform(pre.process(io.getNextSample()))))
+    t1=int(time() * 1000)
+    writer.add_sample(beam.beamform((pre.process(io.getNextSample()))))
+    print(int(time() * 1000)-t1)
     # print(type(io.getNextSample()))
     
-writer.write("./beamformingarray/gentest9res1.wav",48000)   
+writer.write("./beamformingarray/intertest1res3.wav",8*48000)   
 # print(res)
 # beam = Beamformer(4)
 # beam.update_delays(80)
