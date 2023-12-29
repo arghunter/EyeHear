@@ -53,16 +53,16 @@ class SignalGen:
     
     
 # splicer =SignalSplicer(48000)
-gen=SignalGen(spacing=10)
+gen=SignalGen(spacing=0.03)
 writer= AudioWriter()
-sine=Sine(48000,0,period=2,length=1)
-sine.sum(Sawtooth(48000,100000,period=6)) # Sum
-gen.update_delays(45)
+sine=Sine(48000,0,period=400,length=1)
+# sine.sum(Sawtooth(48000,0,period=6)) # Sum
+gen.update_delays(0)
 writer.add_sample(gen.delay_and_gain(sine.data))
-writer.write("./beamformingarray/gentest10.wav",48000) 
+writer.write("./beamformingarray/gentest13.wav",48000) 
 writer2=AudioWriter()
 writer2.add_sample(sine.data)
-writer2.write("./beamformingarray/gentest10o.wav",48000)
+writer2.write("./beamformingarray/gentest13o.wav",48000)
 # saw=Sawtooth(48000,100000,period=1)
 # splicer =SignalSplicer(48000)
 # sine=Sawtooth(48000,0,period=2,length=1)

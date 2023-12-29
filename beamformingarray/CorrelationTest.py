@@ -18,17 +18,17 @@ frequency=file[0]
 
 io=IOStream()
 io.wavToStream("./beamformingarray/output5_100.wav")
-for i in range(1000):
-    samp=io.getNextSample()
-    x = samp.T[0]
-    y = samp.T[14]
-    t1=int(time() * 1000)
-    correlation = signal.correlate(x, y)
-    # print(correlation)
-    lags = signal.correlation_lags(x.size, y.size)
-    lag = lags[np.argmax(correlation)]
-    # print(int(time() * 1000)-t1)
-    print(lag)
+# for i in range(1000):
+# samp=io.getNextSample()
+x = arr.T[0]
+y = arr.T[14]
+t1=int(time() * 1000)
+correlation = signal.correlate(x, y)
+# print(correlation)
+lags = signal.correlation_lags(x.size, y.size)
+lag = lags[np.argmax(correlation)]
+# print(int(time() * 1000)-t1)
+print(lag)
     # print(type(io.getNextSample()))
     
 

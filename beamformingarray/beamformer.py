@@ -70,35 +70,36 @@ class Beamformer:
     #calculates number of samples to delay
     def calculate_channel_shift(self,samples):
         # # really should interpolate
-        # transpose=samples.T
+        transpose=samples.T
         
-        # channel_shifts=np.zeros(self.n_channels)
-        # for i in range(int(self.n_channels/2),self.n_channels):
-        #     x = transpose[0]
-        #     y = transpose[i]
+        channel_shifts=np.zeros(self.n_channels)
+        for i in range(int(self.n_channels/2),self.n_channels):
+            x = transpose[0]
+            y = transpose[i]
             
             
-        #     # t1=int(time() * 1000)
-        #     correlation = signal.correlate(x, y)
-        #     # print(correlation)
-        #     lags = signal.correlation_lags(x.size, y.size)
-        #     channel_shifts[i] = max(lags[np.argmax(correlation)],0)
-        #     # channel_shifts[i]=signal.correlation_lags(transpose[0].size, transpose[i].size)[signal.correlate(transpose[0],transpose[i])]
-        # for i in range(1,int(self.n_channels/2)):
-        #     x = transpose[i]
-        #     y = transpose[self.n_channels-1]
+            # t1=int(time() * 1000)
+            correlation = signal.correlate(x, y)
+            # print(correlation)
+            lags = signal.correlation_lags(x.size, y.size)
+            channel_shifts[i] = max(lags[np.argmax(correlation)],0)
+            # channel_shifts[i]=signal.correlation_lags(transpose[0].size, transpose[i].size)[signal.correlate(transpose[0],transpose[i])]
+        for i in range(1,int(self.n_channels/2)):
+            x = transpose[i]
+            y = transpose[self.n_channels-1]
             
-        #     # t1=int(time() * 1000)
-        #     correlation = signal.correlate(x, y)
-        #     # print(correlation)
-        #     lags = signal.correlation_lags(x.size, y.size)
-        #     channel_shifts[i] = max(0,channel_shifts[self.n_channels-1]-lags[np.argmax(correlation)])
-        #     # channel_shifts[i]=channel_shifts[self.n_channels-1] - signal.correlation_lags(transpose[i].size, transpose[self.n_channels-1].size)[signal.correlate(transpose[i],transpose[self.n_channels-1])]
+            # t1=int(time() * 1000)
+            correlation = signal.correlate(x, y)
+            # print(correlation)
+            lags = signal.correlation_lags(x.size, y.size)
+            channel_shifts[i] = max(0,channel_shifts[self.n_channels-1]-lags[np.argmax(correlation)])
+            # channel_shifts[i]=channel_shifts[self.n_channels-1] - signal.correlation_lags(transpose[i].size, transpose[self.n_channels-1].size)[signal.correlate(transpose[i],transpose[self.n_channels-1])]
+        print(channel_shifts)
+        # print(np.average)
+        return channel_shifts
+        # channel_shifts=(self.delays/self.sample_dur)
         # print(channel_shifts)
         # return channel_shifts
-        channel_shifts=(self.delays/self.sample_dur)
-        print(channel_shifts)
-        return channel_shifts
 
     def update_delays(self,doa): #doa in degrees, assuming plane wave as it is a far-field source
         for i in range(self.n_channels):
@@ -127,7 +128,7 @@ for i in range(1000):
     print(int(time() * 1000)-t1)
     # print(type(io.getNextSample()))
     
-writer.write("./beamformingarray/output5_100res4.wav",1*48000)   
+writer.write("./beamformingarray/output5_100res5.wav",1*48000)   
 # print(res)
 # beam = Beamformer(4)
 # beam.update_delays(80)
