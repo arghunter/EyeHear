@@ -6,7 +6,7 @@ from Preprocessor import Preprocessor
 from time import time
 import sounddevice as sd
 from scipy import signal
-
+from VAD import VAD
 v=340.3 # speed of sound at sea level m/s
     
 class Beamformer:
@@ -17,7 +17,8 @@ class Beamformer:
         self.delays = np.zeros(n_channels) #in microseconds
         self.gains = np.ones(n_channels) # multiplier
         self.sample_dur= 1/sample_rate *10**6 #Duration of a sample in microseconds
-        
+        self.last_shift=np.zeros(n_channels)
+        self.vad=VAD(sample_rate=48000, agressiveness=3)
     def beamform(self,samples):
         # print(samples.shape[0])
         
@@ -39,7 +40,11 @@ class Beamformer:
         return summed
     def delay_and_gain(self, samples):
         #backwards interpolations solves every prblem
-        shifts=self.calculate_channel_shift(samples)
+        if(True):#if(self.vad.is_speech((samples.T[0]).T)):
+            shifts=self.calculate_channel_shift(samples)
+        else:
+            shifts=self.last_shift
+        self.last_shift=shifts
         intshifts=np.floor(shifts)
         max_sample_shift=int(max(intshifts))
         dims = samples.shape
@@ -122,7 +127,7 @@ class Beamformer:
     
 
 beam = Beamformer(8,spacing=0.03,sample_rate=1*48000)
-beam.update_delays(0)
+beam.update_delays(90)
 io=IOStream()
 writer= AudioWriter()
 io.wavToStream("./beamformingarray/output5_100v2.wav")
@@ -138,7 +143,7 @@ for i in range(1000):
     print(int(time() * 1000)-t1)
     # print(type(io.getNextSample()))
     
-writer.write("./beamformingarray/output5_100v2res1.wav",1*48000)   
+writer.write("./beamformingarray/output5_100v2res6.wav",1*48000)   
 # print(res)
 # beam = Beamformer(4)
 # beam.update_delays(80)

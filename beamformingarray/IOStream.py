@@ -13,7 +13,10 @@ class IOStream: #sample duration in microseconds
     def wavToStream(self,filename):
         file = read(filename)
         self.arr = np.array(file[1])
-        self.channels=len(file[1][0])
+        if(len(self.arr.shape)>1):
+            self.channels=len(file[1][0])
+        else: 
+            self.channels=0
         self.frequency=file[0]
         dur=(1/self.frequency)*10**6
         n_samples = int(self.sample_duration/dur)
