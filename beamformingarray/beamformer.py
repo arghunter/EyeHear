@@ -6,7 +6,7 @@ from Preprocessor import Preprocessor
 from time import time
 import sounddevice as sd
 from scipy import signal
-
+from CrossCorrelator import CrossCorrelatior
 v=340.3 # speed of sound at sea level m/s
     
 class Beamformer:
@@ -17,10 +17,10 @@ class Beamformer:
         self.delays = np.zeros(n_channels) #in microseconds
         self.gains = np.ones(n_channels) # multiplier
         self.sample_dur= 1/sample_rate *10**6 #Duration of a sample in microseconds
-        
+        self.cc=CrossCorrelatior(self.sample_rate,self.n_channels,self.spacing)
     def beamform(self,samples):
         # print(samples.shape[0])
-        
+        sample_save=samples
         samples,max_sample_shift=self.delay_and_gain(samples)
         # print(max_sample_shift)
         samples=self.sum_channels(samples)
@@ -29,7 +29,7 @@ class Beamformer:
                 samples[i]+=self.last_overlap[i]
         
         self.last_overlap=samples[samples.shape[0]-max_sample_shift:samples.shape[0]]
-        # print(self.last_overlap.shape[0])
+        self.update_delays(self.cc.get_doa(sample_save,True))
         return samples[0:samples.shape[0]-max_sample_shift]
     
     def sum_channels(self,samples):
@@ -39,7 +39,7 @@ class Beamformer:
         return summed
     def delay_and_gain(self, samples):
         #backwards interpolations solves every prblem
-        shifts=self.calculate_channel_shift(samples)
+        shifts=self.calculate_channel_shift()
         intshifts=np.floor(shifts)
         max_sample_shift=int(max(intshifts))
         dims = samples.shape
@@ -68,37 +68,8 @@ class Beamformer:
        
         return delayed,max_sample_shift
     #calculates number of samples to delay
-    def calculate_channel_shift(self,samples):
-        # # really should interpolate
-        # transpose=samples.T
-        
-        # channel_shifts=np.zeros(self.n_channels)
-        # for i in range(int(self.n_channels/2),self.n_channels):
-        #     x = transpose[0]
-        #     y = transpose[i]
-            
-            
-        #     # t1=int(time() * 1000)
-        #     correlation = signal.correlate(x, y)
-        #     # print(correlation)
-        #     lags = signal.correlation_lags(x.size, y.size)
-        #     channel_shifts[i] = max(lags[np.argmax(correlation)],0)
-        #     # channel_shifts[i]=signal.correlation_lags(transpose[0].size, transpose[i].size)[signal.correlate(transpose[0],transpose[i])]
-        # for i in range(1,int(self.n_channels/2)):
-        #     x = transpose[i]
-        #     y = transpose[self.n_channels-1]
-            
-        #     # t1=int(time() * 1000)
-        #     correlation = signal.correlate(x, y)
-        #     # print(correlation)
-        #     lags = signal.correlation_lags(x.size, y.size)
-        #     channel_shifts[i] = max(0,channel_shifts[self.n_channels-1]-lags[np.argmax(correlation)])
-        #     # channel_shifts[i]=channel_shifts[self.n_channels-1] - signal.correlation_lags(transpose[i].size, transpose[self.n_channels-1].size)[signal.correlate(transpose[i],transpose[self.n_channels-1])]
-        # print(channel_shifts)
-        # # print(np.average)
-        # return channel_shifts
+    def calculate_channel_shift(self):
         channel_shifts=(self.delays/self.sample_dur)
-        print(channel_shifts)
         return channel_shifts
 
     def update_delays(self,doa): #doa in degrees, assuming plane wave as it is a far-field source
@@ -112,7 +83,7 @@ class Beamformer:
     
 
 beam = Beamformer(8,spacing=0.03,sample_rate=1*48000)
-beam.update_delays(00)
+beam.update_delays(0)
 io=IOStream()
 writer= AudioWriter()
 io.wavToStream("./beamformingarray/output5_100v2.wav")
@@ -128,7 +99,7 @@ for i in range(1000):
     print(int(time() * 1000)-t1)
     # print(type(io.getNextSample()))
     
-writer.write("./beamformingarray/output5_100v2res3.wav",1*48000)   
+writer.write("./beamformingarray/output5_100v2res10.wav",1*48000)   
 # print(res)
 # beam = Beamformer(4)
 # beam.update_delays(80)
