@@ -20,6 +20,7 @@ class CrossCorrelatior: #spacing in meters,  lag =a of sample segments towait be
         self.doa=0
     def get_doa(self,samples,signal_samp):
         # cycle buffer, if the middle sample is speech and half a second is lag then update the samples in a separate thread
+        
         self.cycle_buffer(samples)
         if not signal_samp:
             self.ticker=self.lag-len(self.buffer)

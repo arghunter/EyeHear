@@ -7,6 +7,7 @@ from time import time
 import sounddevice as sd
 from scipy import signal
 from CrossCorrelator import CrossCorrelatior
+from VAD import VAD
 v=340.3 # speed of sound at sea level m/s
     
 class Beamformer:
@@ -17,7 +18,8 @@ class Beamformer:
         self.delays = np.zeros(n_channels) #in microseconds
         self.gains = np.ones(n_channels) # multiplier
         self.sample_dur= 1/sample_rate *10**6 #Duration of a sample in microseconds
-        self.cc=CrossCorrelatior(self.sample_rate,self.n_channels,self.spacing)
+        self.cc=CrossCorrelatior(self.sample_rate,self.n_channels,self.spacing,lag=4)
+        self.vad=VAD()
     def beamform(self,samples):
         # print(samples.shape[0])
         sample_save=samples
@@ -29,7 +31,9 @@ class Beamformer:
                 samples[i]+=self.last_overlap[i]
         
         self.last_overlap=samples[samples.shape[0]-max_sample_shift:samples.shape[0]]
-        self.update_delays(self.cc.get_doa(sample_save,True))
+        speech=True
+        # speech=self.vad.is_speech(samples[0:samples.shape[0]-max_sample_shift])
+        self.update_delays(self.cc.get_doa(sample_save,speech))
         return samples[0:samples.shape[0]-max_sample_shift]
     
     def sum_channels(self,samples):
@@ -73,6 +77,7 @@ class Beamformer:
         return channel_shifts
 
     def update_delays(self,doa): #doa in degrees, assuming plane wave as it is a far-field source
+        print(doa)
         for i in range(self.n_channels):
             self.delays[i]=(i*self.spacing*np.cos(np.radians(doa))/v)*10**6
         shift=min(self.delays)
@@ -86,20 +91,20 @@ beam = Beamformer(8,spacing=0.03,sample_rate=1*48000)
 beam.update_delays(0)
 io=IOStream()
 writer= AudioWriter()
-io.wavToStream("./beamformingarray/output5_100v2.wav")
-sd.default.device=20
+io.wavToStream("./beamformingarray/gentest16.wav")
+# sd.default.device=20
 # io= IOStream()
 # io.streamAudio(48000,16)
-pre=Preprocessor()
+pre=Preprocessor(mirrored=False)
 
-for i in range(1000):
+for i in range(100):
     t1=int(time() * 1000)
     writer.add_sample(beam.beamform((pre.process(io.getNextSample()))))
     # writer.add_sample(io.getNextSample())
     print(int(time() * 1000)-t1)
     # print(type(io.getNextSample()))
     
-writer.write("./beamformingarray/output5_100v2res10.wav",1*48000)   
+writer.write("./beamformingarray/gentest16res1.wav",1*48000)   
 # print(res)
 # beam = Beamformer(4)
 # beam.update_delays(80)

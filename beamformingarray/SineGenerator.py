@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Signal:
-    def __init__(self, frequency=1, amplitude=1, sample_rate=48000):
+    def __init__(self, frequency=1, amplitude=1, sample_rate=44100):
         self.frequency = frequency
         self.amplitude = amplitude
         self.sample_rate = sample_rate
@@ -45,7 +45,7 @@ class Sawtooth(Signal):
         return sawtooth_wave.reshape(-1, 1)
 
 class Chirp(Signal):
-    def __init__(self, start_freq=20, end_freq=1000, amplitude=1, sample_rate=48000):
+    def __init__(self, start_freq=20, end_freq=1000, amplitude=1, sample_rate=44100):
         super().__init__(frequency=start_freq, amplitude=amplitude, sample_rate=sample_rate)
         self.start_freq = start_freq
         self.end_freq = end_freq
@@ -56,25 +56,13 @@ class Chirp(Signal):
         chirp_wave = self.amplitude * np.sin(2 * np.pi * np.linspace(self.start_freq, self.end_freq, num_samples) * time)
         return chirp_wave.reshape(-1, 1)
 def sum_signals(signal1_wave, signal2_wave):
-    signal1_wave 
-    signal2_wave
-    
-    if len(signal1_wave) < len(signal2_wave):
-            signal1_wave = np.pad(signal1_wave, ((0, len(signal2_wave) - len(signal1_wave)), (0, 0)), 'constant')
-    elif len(signal1_wave) > len(signal2_wave):
-            signal2_wave = np.pad(signal2_wave, ((0, len(signal1_wave) - len(signal2_wave)), (0, 0)), 'constant')
-        
-    summed_wave = signal1_wave + signal2_wave
-       
-        
-    return summed_wave
-def add_noise(signal_wave, noise_level=0.1):
-        
-   
-    noise_shape = signal_wave.shape if len(signal_wave.shape) > 1 else (len(signal_wave), 1)
-    
-    noise = np.random.normal(0, noise_level, noise_shape)
-    noisy_signal = signal_wave + noise
+    summed_wave = signal1_wave + signal2_wave    
+    return summed_wave.reshape(-1, 1)
+# Example usage:
+sine_wave1 = Sine(frequency=5, amplitude=1, sample_rate=44100)
+sine_wave2 = Sine(frequency=10, amplitude=0.5, sample_rate=44100)
 
-    
-    return noisy_signal
+sine_wave1.plot_wave(duration=1)
+sine_wave2.plot_wave(duration=1)
+
+summed_wave = sine_wave1.sum_signals(sine_wave2, duration=1)

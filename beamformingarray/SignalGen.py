@@ -1,5 +1,6 @@
 import numpy as np
-from Signal import Sine,Sawtooth,Wav,Square,Signal
+from Signal import Sine,Sawtooth,Square,Signal,Chirp
+import Signal
 from SignalSplicer import SignalSplicer
 from AudioWriter import AudioWriter
 v=340.3
@@ -55,14 +56,31 @@ class SignalGen:
 # splicer =SignalSplicer(48000)
 gen=SignalGen(spacing=0.03)
 writer= AudioWriter()
-sine=Sine(48000,0,period=400,length=1)
-# sine.sum(Sawtooth(48000,0,period=6)) # Sum
+sine=Chirp(start_freq=2,end_freq=100)
+sine_data=sine.generate_wave(1)
+saw=Sawtooth(frequency=4,amplitude=0.4)
+saw_data=saw.generate_wave(0.6)
 gen.update_delays(0)
-writer.add_sample(gen.delay_and_gain(sine.data))
-writer.write("./beamformingarray/gentest13.wav",48000) 
-writer2=AudioWriter()
-writer2.add_sample(sine.data)
-writer2.write("./beamformingarray/gentest13o.wav",48000)
+sine_data=gen.delay_and_gain(sine_data)
+gen.update_delays(135)
+saw_data=gen.delay_and_gain(saw_data)
+sum_data = Signal.sum_signals(saw_data,sine_data)
+# print(sum_data.shape)
+sum_data=Signal.add_noise(sum_data,noise_level=0.2)
+# print(sum_data.shape)
+writer.add_sample(sum_data)
+writer.write("./beamformingarray/gentest16.wav",48000)
+# sine.sum(Sawtooth(48000,0,period=6)) # Sum
+# gen.update_delays(0)
+# sig1=Signal(gen.delay_and_gain(sine.data),48000,0,t=2)
+# gen.update_delays(90)
+# saw=Sawtooth(48000,0,period=1,amp=0.5)
+# sig1.sum(Signal(gen.delay_and_gain(saw.data),48000,0,t=2))
+# writer.add_sample(sig1.data)
+# writer.write("./beamformingarray/gentest14.wav",48000) 
+# writer2=AudioWriter()
+# writer2.add_sample(sine.data)
+# writer2.write("./beamformingarray/gentest14o.wav",48000)
 # saw=Sawtooth(48000,100000,period=1)
 # splicer =SignalSplicer(48000)
 # sine=Sawtooth(48000,0,period=2,length=1)

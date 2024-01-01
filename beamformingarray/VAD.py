@@ -12,7 +12,7 @@ class VAD:
         self.vad=webrtcvad.Vad(self.agressiveness)
     def is_speech(self,samples):
         edited=np.int16(32767*samples).tobytes()
-        print(len(edited))
+        # print(len(edited))
         return self.vad.is_speech(edited, 48000)
 # vad = webrtcvad.Vad()
 # vad.set_mode(3)
@@ -28,13 +28,14 @@ class VAD:
 # for i in range(1000):
     
 #     edited=np.int16(32767*io.getNextSample()).tobytes()
+#     print(len(edited))
 #     # print(edited)
-#     if vad.is_speech(edited, 48000):
-#         writer.add_sample(ag)
-#     else:
-#         writer.add_sample(ab)
+#     # if vad.is_speech(edited, 48000):
+#     #     writer.add_sample(ag)
+#     # else:
+#     #     writer.add_sample(ab)
 #     # print(np.reshape(io.getNextSample(),(-1)).shape)
-#     # print ('Contains speech: %s' % (vad.is_speech(edited, 48000)))
+#     print ('Contains speech: %s' % (vad.is_speech(edited, 48000)))
 # writer.write("./beamformingarray/output5_000v2res3.wav",1*48000)   
 # sample_rate = 48000
 # frame_duration = 10  # ms
