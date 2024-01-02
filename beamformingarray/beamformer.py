@@ -87,24 +87,24 @@ class Beamformer:
     
     
 
-beam = Beamformer(8,spacing=0.03,sample_rate=1*48000)
-beam.update_delays(0)
-io=IOStream()
-writer= AudioWriter()
-io.wavToStream("./beamformingarray/gentest16.wav")
-# sd.default.device=20
-# io= IOStream()
-# io.streamAudio(48000,16)
-pre=Preprocessor(mirrored=False)
+# beam = Beamformer(8,spacing=0.03,sample_rate=1*48000)
+# beam.update_delays(0)
+# io=IOStream()
+# writer= AudioWriter()
+# io.wavToStream("./beamformingarray/gentest17.wav")
+# # sd.default.device=20
+# # io= IOStream()
+# # io.streamAudio(48000,16)
+# pre=Preprocessor(mirrored=False)
 
-for i in range(100):
-    t1=int(time() * 1000)
-    writer.add_sample(beam.beamform((pre.process(io.getNextSample()))))
-    # writer.add_sample(io.getNextSample())
-    print(int(time() * 1000)-t1)
-    # print(type(io.getNextSample()))
+# for i in range(100):
+#     t1=int(time() * 1000)
+#     writer.add_sample(beam.beamform((pre.process(io.getNextSample()))))
+#     # writer.add_sample(io.getNextSample())
+#     print(int(time() * 1000)-t1)
+#     # print(type(io.getNextSample()))
     
-writer.write("./beamformingarray/gentest16res1.wav",1*48000)   
+# writer.write("./beamformingarray/gentest17res1.wav",1*48000)   
 # print(res)
 # beam = Beamformer(4)
 # beam.update_delays(80)

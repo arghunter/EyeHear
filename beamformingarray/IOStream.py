@@ -9,14 +9,31 @@ class IOStream: #sample duration in microseconds
         self.sample_duration=sample_duration
         self.q=Queue()
         pass
-    # Call one of the two below
+    
+    # Call one of the three below
+    
+    def arrToStream(self,arr,sample_rate):
+        self.arr=arr
+        self.frequency=sample_rate
+        if(len(self.arr.shape)>1):
+            self.channels=arr.shape[1]
+        else: 
+            self.channels=1
+        dur=(1/self.frequency)*10**6
+        n_samples = int(self.sample_duration/dur)
+        iter=0
+        
+        while iter < self.arr.shape[0]:
+            self.q.put(self.arr[iter:iter+n_samples])
+            iter+=n_samples
+        self.q.put(self.arr[iter: self.arr.shape[0]])
     def wavToStream(self,filename):
         file = read(filename)
         self.arr = np.array(file[1])
         if(len(self.arr.shape)>1):
             self.channels=len(file[1][0])
         else: 
-            self.channels=0
+            self.channels=1
         self.frequency=file[0]
         dur=(1/self.frequency)*10**6
         n_samples = int(self.sample_duration/dur)
