@@ -13,6 +13,7 @@ class IOStream: #sample duration in microseconds
     # Call one of the three below
     
     def arrToStream(self,arr,sample_rate):
+        self.const=True
         self.arr=arr
         self.frequency=sample_rate
         if(len(self.arr.shape)>1):
@@ -26,8 +27,10 @@ class IOStream: #sample duration in microseconds
         while iter < self.arr.shape[0]:
             self.q.put(self.arr[iter:iter+n_samples])
             iter+=n_samples
-        self.q.put(self.arr[iter: self.arr.shape[0]])
+        if (self.arr[iter: self.arr.shape[0]]).shape[0]>0:
+            self.q.put(self.arr[iter: self.arr.shape[0]])
     def wavToStream(self,filename):
+        self.const=True
         file = read(filename)
         self.arr = np.array(file[1])
         if(len(self.arr.shape)>1):
@@ -42,7 +45,8 @@ class IOStream: #sample duration in microseconds
         while iter < self.arr.shape[0]:
             self.q.put(self.arr[iter:iter+n_samples])
             iter+=n_samples
-        self.q.put(self.arr[iter: self.arr.shape[0]])
+        if (self.arr[iter: self.arr.shape[0]]).shape[0]>0:
+            self.q.put(self.arr[iter: self.arr.shape[0]])
             
     def audio_callback(self,indata, frames, time, status):
         for i in range(frames):
@@ -56,6 +60,7 @@ class IOStream: #sample duration in microseconds
             # print(frames)
         
     def streamAudio(self,frequency,channels):
+        self.const=False
         self.frequency=frequency
         self.channels=channels
         dur=(1/self.frequency)*10**6
@@ -66,7 +71,8 @@ class IOStream: #sample duration in microseconds
             device=None, channels=self.channels,
             samplerate=self.frequency, callback=self.audio_callback)
         stream.start()
-             
+    def complete(self):
+        return self.const and self.q.empty()
     def getNextSample(self):
         
         return self.q.get()

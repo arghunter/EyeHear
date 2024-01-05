@@ -11,9 +11,12 @@ class VAD:
         self.agressiveness=agressiveness
         self.vad=webrtcvad.Vad(self.agressiveness)
     def is_speech(self,samples):
-        edited=np.int16(32767*samples).tobytes()
+        if(len(samples)%(self.sample_rate/100)==0):
+            edited=np.int16(32767*samples).tobytes()
         # print(len(edited))
-        return self.vad.is_speech(edited, 48000)
+            return self.vad.is_speech(edited, 48000)
+        else:
+            return False
 # vad = webrtcvad.Vad()
 # vad.set_mode(3)
 

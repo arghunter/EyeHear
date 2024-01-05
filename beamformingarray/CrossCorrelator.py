@@ -32,28 +32,31 @@ class CrossCorrelatior: #spacing in meters,  lag =a of sample segments towait be
         return self.doa
     def calculate_doa(self):
         channel_shifts=np.zeros(self.n_channels)
-        
+        pre=Preprocessor(interpolate=16,mirrored=False)
+        self.buffer[1]=pre.process(self.buffer[1])
         for i in range (1, self.n_channels):
-            
-            window1 = signal.windows.kaiser(len(self.buffer[1].T[0])*3,14)
-            x=window1*np.concatenate([(self.buffer[0]).T[0],(self.buffer[1]).T[0],(self.buffer[2]).T[0]])
+            x=self.buffer[1].T[0]
+            y=self.buffer[1].T[i]
+            # window1 = signal.windows.kaiser(len(self.buffer[1].T[0])*3,14)
+            # x=np.concatenate([(self.buffer[0]).T[0],(self.buffer[1]).T[0],(self.buffer[2]).T[0]])
         
             # x=((self.buffer[1]).T[0]) *window
             # window2 = signal.windows.cosine(len(self.buffer[1].T[0]))
-            y=window1*np.concatenate([np.zeros(480),(self.buffer[1]).T[i],np.zeros(480)])
+            # y=np.concatenate([(self.buffer[0]).T[i],(self.buffer[1]).T[i],(self.buffer[2]).T[i]])
 
             # y=((self.buffer[1]).T[i]) *window2
-        
+            
             cross_corr=signal.correlate(x,y)
             lags=signal.correlation_lags(len(x),len(y))
             #TODO: add some weights here
-            lag=-lags[np.argmax(cross_corr)]
-            channel_shifts[i]=lag
-        if self.past_buffer_iter>=self.past_buffer_length:
-            self.past_buffer_iter=-1
+            lag=lags[np.argmax(cross_corr)]
+            channel_shifts[i]=-lag/16
+          
+        # if self.past_buffer_iter>=self.past_buffer_length:
+        #     self.past_buffer_iter=-1
         
-        self.past_shift_buffer[self.past_buffer_iter]=channel_shifts
-        self.past_buffer_iter+=1
+        # self.past_shift_buffer[self.past_buffer_iter]=channel_shifts
+        # self.past_buffer_iter+=1
         # for i in range(1,self.n_channels):
             
         #     diff = np.abs(self.past_shift_buffer.T[i] - np.median(self.past_shift_buffer.T[i]))
@@ -69,6 +72,8 @@ class CrossCorrelatior: #spacing in meters,  lag =a of sample segments towait be
         # print("Cross-correlation result:", cross_corr)
         # print("Corresponding lags:", lags)
         # print("Lag:", lag)
+        # print(channel_shifts)
+        # channel_shifts[7]=29.6
         self.doa=self.shift_to_angle(channel_shifts)
         
     def cycle_buffer(self,samples):
@@ -79,11 +84,16 @@ class CrossCorrelatior: #spacing in meters,  lag =a of sample segments towait be
             self.buffer_head=0
             self.buffer[self.buffer_head]=samples
     def shift_to_angle(self,channel_shifts):
+        
         delays=channel_shifts*self.sample_dur
-        ang=np.zeros(self.n_channels)
+        ang=np.zeros(self.n_channels-1)
         for i in range(1,self.n_channels):
-            ang[i]=np.degrees(np.arccos(v*delays[i]/i/self.spacing/(10**6)))%360
-        return np.mean(ang[~np.isnan(ang)])
+            ang[i-1]=np.degrees(np.arccos(v*delays[i]/i/self.spacing/(10**6)))%360
+        # print(ang)
+        avg_angle=np.mean(ang[~np.isnan(ang)])
+        if(np.isnan(avg_angle)):
+            return 0
+        return avg_angle
     def update_delays(self,doa): #doa in degrees, assuming plane wave as it is a far-field source
         for i in range(self.n_channels):
             self.delays[i]=(i*self.spacing*np.cos(np.radians(doa))/v)*10**6

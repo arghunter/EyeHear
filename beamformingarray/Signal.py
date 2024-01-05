@@ -45,7 +45,7 @@ class Sawtooth(Signal):
         return sawtooth_wave.reshape(-1, 1)
 
 class Chirp(Signal):
-    def __init__(self, start_freq=20, end_freq=1000, amplitude=1, sample_rate=48000):
+    def __init__(self, start_freq=20, end_freq=100, amplitude=1, sample_rate=48000):
         super().__init__(frequency=start_freq, amplitude=amplitude, sample_rate=sample_rate)
         self.start_freq = start_freq
         self.end_freq = end_freq

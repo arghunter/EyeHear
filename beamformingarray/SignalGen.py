@@ -3,6 +3,9 @@ from Signal import Sine,Sawtooth,Square,Signal,Chirp
 import Signal
 from SignalSplicer import SignalSplicer
 from AudioWriter import AudioWriter
+from IOStream import IOStream
+from CrossCorrelator import CrossCorrelatior
+from scipy import signal
 v=340.3
 
 
@@ -27,20 +30,27 @@ class SignalGen:
     def delay_and_gain(self, samples):
         
         shifts=self.calculate_channel_shift()
-       
+        
+        intshifts=np.floor(shifts)
+        # print(intshifts)
         max_sample_shift=int(max(shifts))
+        # print(max_sample_shift)
         dims = samples.shape
         dims=(int(dims[0]+max_sample_shift),dims[1])
         delayed = np.zeros((dims[0],self.n_channels))
         for i in range(self.n_channels):
-            for j in range(dims[0]-max_sample_shift):
-                delayed[j+int(shifts[i])][i]=self.gains[i]*samples[j][0]               
+            intermult=1-(shifts[i]%1)
+            shiftdiff=int(intshifts[i])
+            for j in range(1,dims[0]-max_sample_shift):
+                delayed[j+shiftdiff][i]=self.gains[i]*((samples[j][0]-samples[j-1][0])*(intermult)+samples[j-1][0])               
             
         
         return delayed
     #calculates number of samples to delay
     def calculate_channel_shift(self):
-        channel_shifts=np.around((self.delays/self.sample_dur))
+        channel_shifts=((self.delays/self.sample_dur))
+        # print((self.delays/self.sample_dur))
+        
         return channel_shifts
     def update_delays(self,doa): #doa in degrees, assuming plane wave as it is a far-field source
         for i in range(self.n_channels):
@@ -52,24 +62,52 @@ class SignalGen:
 
 
     
-    
+# gen=SignalGen(spacing=0.03)
+# writer= AudioWriter()
+# # sine=Chirp(start_freq=50,end_freq=150)
+# sine=Sine(frequency=50)
+# sine_data=sine.generate_wave(1)
+# gen.update_delays(0)
+# sine_data=gen.delay_and_gain(sine_data)
+# stream=IOStream()
+# stream.arrToStream(sine_data,48000)
+# cc=CrossCorrelatior(spacing=0.03)
+# # sample= stream.getNextSample()
+# # for i in range(10):
+# #     stream.getNextSample()
+# sample= stream.getNextSample()
+# # window1 = signal.windows.hamming(len(sample.T[0]))
+# # print(len(window1))
+# # cross_corr=signal.correlate(window1*sample.T[0],window1*sample.T[1])
+# # lags=signal.correlation_lags(len(sample.T[0]),len(sample.T[1]))
+# # lag=lags[np.argmax(cross_corr)]
+# # print(lag)
+# print(cc.get_doa(sample,True))
+# # for i in range(50):
+# print(cc.get_doa(stream.getNextSample(),True))
+# print(cc.get_doa(stream.getNextSample(),True))
+# print(cc.get_doa(stream.getNextSample(),True))
+# for i in range(len(sample)):
+#     print(str(i)+" "+ str(sample[i]))
+# while(not stream.complete()):
+#     print(cc.get_doa(stream.getNextSample(),True))
 # splicer =SignalSplicer(48000)
-gen=SignalGen(spacing=0.03)
-writer= AudioWriter()
-sine=Sine(frequency=50)
-sine_data=sine.generate_wave(1)
-saw=Sawtooth(frequency=4,amplitude=0.4)
-saw_data=saw.generate_wave(0.6)
-gen.update_delays(0)
-sine_data=gen.delay_and_gain(sine_data)
-# gen.update_delays(135)
-# saw_data=gen.delay_and_gain(saw_data)
-# sum_data = Signal.sum_signals(saw_data,sine_data)
-# print(sum_data.shape)
-# sum_data=Signal.add_noise(sine_data,noise_level=0.2)
-# print(sum_data.shape)
-writer.add_sample(sine_data)
-writer.write("./beamformingarray/gentest17.wav",48000)
+# gen=SignalGen(spacing=0.03)
+# writer= AudioWriter()
+# sine=Sine(frequency=50)
+# sine_data=sine.generate_wave(1)
+# saw=Sawtooth(frequency=4,amplitude=0.4)
+# saw_data=saw.generate_wave(0.6)
+# gen.update_delays(0)
+# sine_data=gen.delay_and_gain(sine_data)
+# # gen.update_delays(135)
+# # saw_data=gen.delay_and_gain(saw_data)
+# # sum_data = Signal.sum_signals(saw_data,sine_data)
+# # print(sum_data.shape)
+# # sum_data=Signal.add_noise(sine_data,noise_level=0.2)
+# # print(sum_data.shape)
+# writer.add_sample(sine_data)
+# writer.write("./beamformingarray/gentest17.wav",48000)
 # sine.sum(Sawtooth(48000,0,period=6)) # Sum
 # gen.update_delays(0)
 # sig1=Signal(gen.delay_and_gain(sine.data),48000,0,t=2)

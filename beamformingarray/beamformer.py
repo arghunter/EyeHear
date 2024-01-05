@@ -20,11 +20,14 @@ class Beamformer:
         self.sample_dur= 1/sample_rate *10**6 #Duration of a sample in microseconds
         self.cc=CrossCorrelatior(self.sample_rate,self.n_channels,self.spacing,lag=4)
         self.vad=VAD()
+        self.doa=0
+        self.update_delays(self.doa)
+        self.locked=False
     def beamform(self,samples):
-        # print(samples.shape[0])
+        
         sample_save=samples
         samples,max_sample_shift=self.delay_and_gain(samples)
-        # print(max_sample_shift)
+       
         samples=self.sum_channels(samples)
         if hasattr(self,'last_overlap'):
             for i in range(self.last_overlap.shape[0]):
@@ -33,9 +36,11 @@ class Beamformer:
         self.last_overlap=samples[samples.shape[0]-max_sample_shift:samples.shape[0]]
         speech=True
         # speech=self.vad.is_speech(samples[0:samples.shape[0]-max_sample_shift])
-        self.update_delays(self.cc.get_doa(sample_save,speech))
+        if(len(sample_save)==480 and not self.locked):
+            self.update_delays(self.cc.get_doa(sample_save,speech))
         return samples[0:samples.shape[0]-max_sample_shift]
-    
+    def toggle_doa_lock(self):
+        self.locked=not self.locked
     def sum_channels(self,samples):
         summed=np.zeros(samples.shape[0])
         for j in range(samples.shape[0]):
@@ -44,6 +49,7 @@ class Beamformer:
     def delay_and_gain(self, samples):
         #backwards interpolations solves every prblem
         shifts=self.calculate_channel_shift()
+
         intshifts=np.floor(shifts)
         max_sample_shift=int(max(intshifts))
         dims = samples.shape
@@ -77,7 +83,7 @@ class Beamformer:
         return channel_shifts
 
     def update_delays(self,doa): #doa in degrees, assuming plane wave as it is a far-field source
-        print(doa)
+        self.doa=doa
         for i in range(self.n_channels):
             self.delays[i]=(i*self.spacing*np.cos(np.radians(doa))/v)*10**6
         shift=min(self.delays)
