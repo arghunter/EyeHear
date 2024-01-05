@@ -56,9 +56,7 @@ class Chirp(Signal):
         chirp_wave = self.amplitude * np.sin(2 * np.pi * np.linspace(self.start_freq, self.end_freq, num_samples) * time)
         return chirp_wave.reshape(-1, 1)
 def sum_signals(signal1_wave, signal2_wave):
-    signal1_wave 
-    signal2_wave
-    
+   
     if len(signal1_wave) < len(signal2_wave):
             signal1_wave = np.pad(signal1_wave, ((0, len(signal2_wave) - len(signal1_wave)), (0, 0)), 'constant')
     elif len(signal1_wave) > len(signal2_wave):

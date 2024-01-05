@@ -9,6 +9,7 @@ from VAD import VAD
 import soundfile as sf
 from SignalGen import SignalGen
 from Signal import Sine,Sawtooth,Chirp,Square
+import Signal
 import matplotlib.pyplot as plt
 
 speech_database_path="C:\\Users\\arg\\Documents\\Datasets\\dev-clean.tar\\dev-clean\\LibriSpeech"
@@ -17,8 +18,8 @@ speech_database_local=speech_database_path+"\\"+speech_database_subset
 speakers=[]
 chapters=[]
 target_samplerate=48000
-num_microphones=8
-spacing=0.03
+num_microphones=7
+spacing=0.014
 def open_chapter(chapter_num):
     print(chapter_num)
     chapter_string=speech_database_local+"\\"+chapters[chapter_num][1]+"\\"+chapters[chapter_num][0]+"\\"
@@ -151,6 +152,55 @@ ax.set_xlabel("Theta (Degrees)")
 ax.set_ylabel("Amplitude (Decibels)")
 plt.axvline(x = source_angle, color = 'b', label = 'axvline - full height')
 plt.show()
+
+# Multiple Source Attenuation Test
+# attenuation_test_length=0.5
+# min_angle=0
+# max_angle=180
+# source1_angle=30
+# distance1=1
+# source2_angle=150
+# distance2=1
+# min_frequency=100
+# max_frequency=1000
+# sig_gen=SignalGen(num_microphones,spacing,target_samplerate)
+# # sig1=Chirp(min_frequency,max_frequency)
+# sig1=Sine(frequency=min_frequency,sample_rate=target_samplerate)
+# sig1_data=sig1.generate_wave(attenuation_test_length)
+# sig_gen.update_delays(source1_angle)
+# sig_gen.update_gains(distance1)
+# angled_sig1_data=sig_gen.delay_and_gain(sig1_data)
+# sig2=Sine(frequency=max_frequency,sample_rate=target_samplerate)
+# sig2_data=sig2.generate_wave(attenuation_test_length)
+# sig_gen.update_delays(source2_angle)
+# sig_gen.update_gains(distance2)
+# angled_sig2_data=sig_gen.delay_and_gain(sig2_data)
+# summed_data=Signal.sum_signals(angled_sig1_data,angled_sig2_data)
+
+# angles=[]
+# rms_data=[]
+# for i in range(min_angle,max_angle):
+#     print(i)
+#     angles.append(i)
+#     beamformer=Beamformer(num_microphones,spacing,target_samplerate)
+#     beamformer.toggle_doa_lock()
+#     beamformer.update_delays(i)
+#     attenuated_sig_data=beamformer.beamform(summed_data)
+#     rms=np.sqrt(np.mean(attenuated_sig_data**2))
+#     rms_data.append(rms)    
+# angles_arr=np.array(angles)
+# rms_data_arr=(np.array(rms_data))
+
+# plt.figure(figsize=(10,4),dpi=100)
+# ax = plt.subplot(131)
+# ax.plot(angles_arr,rms_data_arr)
+# ax.grid(True)
+# ax.set_xlim([0, 180])
+# ax.set_xlabel("Theta (Degrees)")
+# ax.set_ylabel("Amplitude (Decibels)")
+# plt.axvline(x = source1_angle, color = 'b', label = 'axvline - full height')
+# plt.axvline(x = source2_angle, color = 'r', label = 'axvline - full height')
+# plt.show()
 #Single Source Tests
 # read_speakers()
 # read_chapters()

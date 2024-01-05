@@ -57,8 +57,9 @@ class SignalGen:
             self.delays[i]=(i*self.spacing*np.cos(np.radians(doa))/v)*10**6
         shift=min(self.delays)
         self.delays+=-shift
-    def update_gains(self,doa):
-        pass
+    def update_gains(self,distance):
+        for i in range(self.n_channels):
+            self.gains[i]=1/distance**2
 
 
     
