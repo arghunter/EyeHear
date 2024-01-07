@@ -35,7 +35,7 @@ class Beamformer:
         
         self.last_overlap=samples[samples.shape[0]-max_sample_shift:samples.shape[0]]
         speech=True
-        # speech=self.vad.is_speech(samples[0:samples.shape[0]-max_sample_shift])
+        speech=self.vad.is_speech(samples[0:samples.shape[0]-max_sample_shift])
         if(len(sample_save)==480 and not self.locked):
             self.update_delays(self.cc.get_doa(sample_save,speech))
         return samples[0:samples.shape[0]-max_sample_shift]
