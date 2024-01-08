@@ -8,7 +8,7 @@ class MVDR:
         self.vector_gen = vector_gen
         self.sample_rate=sample_rate
     def get_peaks(self, frame):
-        frame=(self.convert_to_complex(frame)).T
+        frame=(self.convert_to_complex(frame))
         thetas= np.arange(-180,180,1)
         res=[]
         for theta in thetas:
@@ -51,10 +51,27 @@ Nr=8
 r_pos=np.arange(Nr)*d
 look_gen=Look_Vector_Generator(r_pos)
 mvdr=MVDR(look_gen)
-sig=Sine(2000)
-gen=SignalGen(Nr,d)
-gen.update_delays(90)
 
-r=(gen.delay_and_gain(sig.generate_wave(0.1)))
+Nr = 8 # 8 elements
+N=14400
+sample_rate=48000
+t = np.arange(N)/sample_rate
+theta1 = 20 / 180 * np.pi # convert to radians
+theta2 = 25 / 180 * np.pi
+theta3 = -40 / 180 * np.pi
+a1 = np.exp(-2j * np.pi * d * np.arange(Nr) * np.sin(theta1))
+# a1=np.ones(Nr)
+a1 = a1.reshape(-1,1)
+sig=Sine(frequency=0.01e6)
+tone1=sig.generate_wave(0.3)
+# we'll use 3 different frequencies
+# tone1 = np.exp(2j*np.pi*0.01e6*t)
+tone1 = tone1.reshape(1,-1)
+print(tone1)
+r = a1 @ tone1
+print(r.shape)
+n = np.random.randn(Nr, N) + 1j*np.random.randn(Nr, N)
+r = r + 0.04*n
+# r=(gen.delay_and_gain(sig.generate_wave(0.1)))
 
 mvdr.get_peaks(r)
