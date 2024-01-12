@@ -1,101 +1,67 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
-
+import soundfile as sf
 from scipy import fft
 from Signal import Sine
 from SignalGen import SignalGen
 from IOStream import IOStream
 from AudioWriter import AudioWriter
+from scipy.io.wavfile import read
+# io= IOStream(sample_duration=20000)
+# io.wavToStream("./beamformingarray/AudioTests/test_input_sig.wav")
+file = read("./beamformingarray/AudioTests/test_input_sig.wav")
+pcm=np.array(file[1])
+FS=file[0]
+N=pcm.shape[0]
+stft_len=1024
+num_channel=pcm.shape[1]
+frame_len=960
+frame_shift=480 # 50% overlap
+exp_avg_param=50
+win=signal.windows.hann(frame_len)
+win=win*frame_shift/sum(win) # why?
+win_multi=np.tile(win,(num_channel,1)).T
+frame_num=np.floor((N-frame_len)/frame_shift+1);
+output=np.zeros((N,1))
+N_f=int(stft_len/2+1)#Num frequencies
+global_covar=np.zeros((num_channel,num_channel,N_f))
+frame_count=1
+j=1
+mu=0
+while j + frame_len < N:
+    print(j)
+    win_data = pcm[j : j + frame_len,:]*win_multi
+    spectrum=fft.fft(win_data,stft_len)
+    if frame_count < exp_avg_param:
+        mu=(frame_count-1)/frame_count
+    for k in range(1,N_f):
+        cov_mat=np.dot(spectrum[k,:].T,np.conj((spectrum[k,:])))
+        corr_mat=cov_mat/np.trace(cov_mat); 
+        global_covar[:,:,k]=mu*global_covar[:,:,k]+(1-mu)*corr_mat
+    time=np.zeros(1,num_channel)
+    w=np.zeros(num_channel,N_f)
+    for k in range (0,N_f-1):
+        f=k*FS/stft_len;
+        alpha=np.exp(-j*2*np.pi*f*time).T
+        r_inv=np.linalg.pinv(global_covar[:,:,k+1]+(1e-8)*np.diag(np.ones((num_channel,1))))
+        w[:,k+1]=r_inv*alpha/(np.conj(alpha.T)*r_inv*alpha)
+    rec_signal=np.conj(w.T)*spectrum[1:N_f,:]# check line
+    rec_signal=[rec_signal]
+    #### CHECK THIS
+    submatrix = rec_signal[1:-1, :]
+    flipped_conjugate = np.flipud(np.conj(submatrix))
+    rec_signal = np.vstack([rec_signal, flipped_conjugate])
+    ####    
+    res=np.real(np.fft.ifft(np.sum(rec_signal,axis=1)))
+    res=res[1:frame_len]
+    output[j:j+frame_len-1,:]=output[j:j+frame_len-1,:]+res
+    
+    frame_count = frame_count + 1; 
 
-class MVDR:
-    def __init__(self,vector_gen, sample_rate=48000):
-        self.vector_gen = vector_gen
-        self.sample_rate=sample_rate
-    def get_peaks(self, frame):
-        # frame=(self.convert_to_complex(frame))
-        thetas= np.arange(-180,180,1)
-        res=[]
-        for theta in thetas:
-            look=self.vector_gen.get_look_vector(theta)
-            cov=frame @frame.H# Covariance
-            cov_inv=np.linalg.pinv(cov)
-            cost=1/(look.H@cov_inv@look)
-            cost=np.abs(cost[0,0])
-            cost = 10*np.log10(cost)
-            res.append(cost)
-        res/=np.max(res)
-        peaks=thetas[(signal.find_peaks(res)[0])]
-        print(peaks)
-        # fig, ax = plt.subplots(subplot_kw={'projection': 'polar'})
-        # ax.plot(np.radians(thetas), res) # MAKE SURE TO USE RADIAN FOR POLAR
-        # ax.set_theta_zero_location('N') # make 0 degrees point up
-        # ax.set_theta_direction(-1) # increase clockwise
-        # ax.set_rlabel_position(30)  # Move grid labels away from other labels
-        # plt.show()
-            # print(thetas[peaks[i]])
-    def convert_to_complex(self,frame):
-        arr=np.matrix(frame.astype(complex))
-        # print(arr)
-        # for i in range(len(arr)):
-        #     print(arr[i])
-        return arr
-
-
-
-
-class Look_Vector_Generator:
-    #r_pos: array of microphone positions
-    def __init__(self,r_pos):
-        self.r_pos=r_pos
-        
-    def get_look_vector(self,theta):
-        return (np.asmatrix(np.exp(-2j*np.pi*self.r_pos*np.sin(np.radians(theta))))).T
-d=0.10
-Nr=8
-r_pos=np.arange(Nr)*d
-look_gen=Look_Vector_Generator(r_pos)
-mvdr=MVDR(look_gen)
-
-# 8 elements
-N=14400
-sample_rate=48000
-# t = np.arange(N)/sample_rate
-# theta1 = 90 / 180 * np.pi # convert to radians
-# theta2 = 25 / 180 * np.pi
-# theta3 = -40 / 180 * np.pi
-# a1 = np.exp(-2j * np.pi * d * np.arange(Nr) * np.sin(theta1))
-# print(a1)
-# a1=np.ones(Nr)
-# a1 = a1.reshape(-1,1)
-sig=Sine(frequency=0.01e6)
-tone1=sig.generate_wave(0.3)
-
-gen=SignalGen(Nr,d)
-gen.update_delays(0)
-tone1=gen.delay_and_gain(tone1)
-io=IOStream()
-io.arrToStream(tone1,sample_rate=sample_rate)
-while (not io.complete()):
-    frame=io.getNextSample()
-    spectrum=fft.fft(frame)
-    mvdr.get_peaks((np.asmatrix(spectrum)).T)
-    print(spectrum.shape)
-
-
-
-# tone1=signal.hilbert(tone1)
-# we'll use 3 different frequencies
-# tone1 = np.exp(2j*np.pi*0.01e6*t)
-
-# print(tone1)
-r = tone1.reshape(Nr,-1)
-# r=tone1
-print(r.shape)
-# for i in range(len(r.T)):
-#     print(r.T[i])
-# n = np.random.randn(Nr, N) + 1j*np.random.randn(Nr, N)
-# r = r + 0.04*n
-# r=(gen.delay_and_gain(sig.generate_wave(0.1)))
-
-# mvdr.get_peaks(np.asmatrix(r))
+    j = j + frame_shift;
+    
+    
+aw=AudioWriter()
+aw.add_sample(output)
+aw.write("./beamformingarray/AudioTests/8.wav",48000)
