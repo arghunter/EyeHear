@@ -1,9 +1,12 @@
 import numpy as np
 from scipy.io.wavfile import read
 from scipy.io.wavfile import write
+import scipy.signal as signal
+from time import time as time1
+
 # io= IOStream(sample_duration=20000)
 # io.wavToStream("./beamformingarray/AudioTests/test_input_sig.wav")
-file = read("./beamformingarray/AudioTests/test_input_sig_1.wav")
+file = read("./beamformingarray/AudioTests/test_input_sig.wav")
 
 pcm=np.array(file[1])/32767
 # print(np.max(pcm))
@@ -14,6 +17,9 @@ num_channel=pcm.shape[1]
 frame_len=960
 frame_shift=480 # 50% overlap
 exp_avg_param=50
+C=343.3
+d=0.028
+theta=0
 win=np.hanning(frame_len)
 win=win*frame_shift/sum(win) # why?
 win_multi=np.tile(win,(num_channel,1)).T
@@ -26,12 +32,12 @@ global_covar=np.zeros((num_channel,num_channel,N_f),dtype='complex128')
 frame_count=1
 i=0
 mu=0
-
 while i + frame_len < N:# while i<=0:# 
+    t1=int(time1() * 1000)
     # print(pcm[j : j + frame_len,:].shape)
     win_data = np.asmatrix(pcm[i : i + frame_len,:]*win_multi)
     # print(win_data)
-    spectrum=np.asmatrix(np.fft.fft(win_data,stft_len,axis=0))
+    spectrum=np.asmatrix(np.fft.rfft(win_data,stft_len,axis=0))
     # print(spectrum.shape)
     if frame_count < exp_avg_param:
         mu=(frame_count-1)/frame_count
@@ -42,9 +48,11 @@ while i + frame_len < N:# while i<=0:#
         # print(cov_mat.shape)
         
         global_covar[:, :, k] = mu * global_covar[:, :, k] + (1 - mu) * corr_mat
+    # print(spectrum.)
     # print(i)
     # print(global_covar.dtype)
-    time=np.asmatrix(np.zeros((1,num_channel)))
+    
+    time = np.asmatrix(np.arange(0,num_channel)*d*np.sin(np.degrees(theta))/C)
     w=np.asmatrix(np.zeros((num_channel,N_f),dtype='complex128'))
     for k in range (0,N_f-1):
         f=k*FS/stft_len;
@@ -74,6 +82,8 @@ while i + frame_len < N:# while i<=0:#
     
     frame_count = frame_count + 1;
     i = i + frame_shift;
+    print(time1()*1000-t1)
 # plot=plt.plot(np.arange(0,len(res)),res)
-# plot.show()  
+# plot.show()
+# output=signal.wiener(output)  
 write("./beamformingarray/AudioTests/8.wav", 48000, output)
