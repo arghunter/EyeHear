@@ -6,7 +6,7 @@ from time import time as time1
 
 # io= IOStream(sample_duration=20000)
 # io.wavToStream("./beamformingarray/AudioTests/test_input_sig.wav")
-file = read("./beamformingarray/AudioTests/test_input_sig.wav")
+file = read("./beamformingarray/AudioTests/test_input_sig2.wav")
 
 pcm=np.array(file[1])/32767
 # print(np.max(pcm))
@@ -48,10 +48,23 @@ while i + frame_len < N:# while i<=0:#
         # print(cov_mat.shape)
         
         global_covar[:, :, k] = mu * global_covar[:, :, k] + (1 - mu) * corr_mat
-    # print(spectrum.)
-    # print(i)
-    # print(global_covar.dtype)
-    
+
+    time=(np.zeros((num_channel)))
+    X = np.fft.fft(win_data.T[0],axis=0);
+
+    Y = np.fft.fft(win_data.T[7],axis=0);
+
+    R = np.multiply(X,np.conj(Y));
+
+    tphat = np.real(np.fft.ifft(np.divide(R,np.abs(R)),axis=0));
+    tphat=np.reshape(tphat,(-1))
+    locs, _ = signal.find_peaks(tphat, height=None, distance=None)
+    sorted_indices = np.argsort(tphat[locs])[::-1]
+    pks = tphat[locs][sorted_indices]
+    locs = locs[sorted_indices]
+    td=locs[0]*1/FS
+    theta=np.degrees(np.arccos(343.3*td/6/d/(10**6)))%360-90
+    print(theta)
     time = np.asmatrix(np.arange(0,num_channel)*d*np.sin(np.degrees(theta))/C)
     w=np.asmatrix(np.zeros((num_channel,N_f),dtype='complex128'))
     for k in range (0,N_f-1):
@@ -61,16 +74,13 @@ while i + frame_len < N:# while i<=0:#
         r_inv=np.linalg.pinv(global_covar[:,:,k]+(1e-8)*np.eye(num_channel)) # this is bad
         w[:,k]=r_inv@alpha/(np.conj(alpha.T)@r_inv@alpha)
     rec_signal=np.multiply(w.H,spectrum[0:N_f,:])# Works till here the next block may be an issue
-    # rec_signal=[rec_signal]
-    # print(i)
-    # print(rec_signal.shape)
-    #### CHECK THIS
+
     submatrix = rec_signal[1:-1, :]
-    # print(submatrix.shape)
+
     flipped_conjugate = np.flipud(np.conj(submatrix))
     rec_signal = np.vstack([rec_signal, flipped_conjugate])
-    # print(rec_signal.shape)
-    ####
+
+
     summed_signal=(np.sum(rec_signal,axis=1))
     
     res_comp=(np.fft.ifft(summed_signal, axis=0))
@@ -82,7 +92,8 @@ while i + frame_len < N:# while i<=0:#
     
     frame_count = frame_count + 1;
     i = i + frame_shift;
-    print(time1()*1000-t1)
+    # print(time1()*1000-t1)
+    print(i)
 # plot=plt.plot(np.arange(0,len(res)),res)
 # plot.show()
 # output=signal.wiener(output)  

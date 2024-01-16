@@ -46,6 +46,10 @@ class CrossCorrelatior: #spacing in meters,  lag =a of sample segments towait be
 
             # y=((self.buffer[1]).T[i]) *window2
             
+            # The line `cross_corr=signal.correlate(x,y)` is performing cross-correlation between two
+            # signals `x` and `y`. Cross-correlation measures the similarity between two signals as a
+            # function of the time lag applied to one of them. It calculates the correlation
+            # coefficient at different time lags and returns an array of correlation values.
             cross_corr=signal.correlate(x,y)
             lags=signal.correlation_lags(len(x),len(y))
             #TODO: add some weights here
