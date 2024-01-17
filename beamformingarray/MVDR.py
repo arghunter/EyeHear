@@ -6,10 +6,10 @@ from time import time as time1
 
 # io= IOStream(sample_duration=20000)
 # io.wavToStream("./beamformingarray/AudioTests/test_input_sig.wav")
-file = read("./beamformingarray/AudioTests/test_input_sig2.wav")
+file = read("./beamformingarray/AudioTests/test_input_sig_2_1.wav")
 
 pcm=np.array(file[1])/32767
-# print(np.max(pcm))
+print(np.max(pcm))
 FS=file[0]
 N=pcm.shape[0]
 stft_len=1024
@@ -25,7 +25,7 @@ win=win*frame_shift/sum(win) # why?
 win_multi=np.tile(win,(num_channel,1)).T
 frame_num=int(np.floor((N-frame_len)/frame_shift+1));
 # print(frame_num)
-# N=31000
+N=31000
 output=np.zeros((N,1))
 N_f=int(stft_len/2)+1#Num frequencies
 global_covar=np.zeros((num_channel,num_channel,N_f),dtype='complex128')
@@ -48,11 +48,11 @@ while i + frame_len < N:# while i<=0:#
         # print(cov_mat.shape)
         
         global_covar[:, :, k] = mu * global_covar[:, :, k] + (1 - mu) * corr_mat
+    # print(win_data.T[0].T.shape)
+    
+    X = np.fft.fft(win_data.T[0].T,axis=0);
 
-    time=(np.zeros((num_channel)))
-    X = np.fft.fft(win_data.T[0],axis=0);
-
-    Y = np.fft.fft(win_data.T[7],axis=0);
+    Y = np.fft.fft(win_data.T[6].T,axis=0);
 
     R = np.multiply(X,np.conj(Y));
 
@@ -62,15 +62,15 @@ while i + frame_len < N:# while i<=0:#
     sorted_indices = np.argsort(tphat[locs])[::-1]
     pks = tphat[locs][sorted_indices]
     locs = locs[sorted_indices]
+    print(locs[0:10])
     td=locs[0]*1/FS
-    theta=np.degrees(np.arccos(343.3*td/6/d/(10**6)))%360-90
-    print(theta)
+    theta=np.degrees(np.arccos(343.3*td/6/d))%360-90
+    # print(theta)
     time = np.asmatrix(np.arange(0,num_channel)*d*np.sin(np.degrees(theta))/C)
     w=np.asmatrix(np.zeros((num_channel,N_f),dtype='complex128'))
     for k in range (0,N_f-1):
         f=k*FS/stft_len;
         alpha=np.exp(-1j*2*np.pi*f*time).T
-        # print(alpha.dtype)
         r_inv=np.linalg.pinv(global_covar[:,:,k]+(1e-8)*np.eye(num_channel)) # this is bad
         w[:,k]=r_inv@alpha/(np.conj(alpha.T)@r_inv@alpha)
     rec_signal=np.multiply(w.H,spectrum[0:N_f,:])# Works till here the next block may be an issue
@@ -87,14 +87,11 @@ while i + frame_len < N:# while i<=0:#
     res=np.real(res_comp)
     
     res=res[0:frame_len]
-    # print(np.mean(res))
+    
     output[i:i + frame_len, :] += res
     
     frame_count = frame_count + 1;
     i = i + frame_shift;
-    # print(time1()*1000-t1)
+   
     print(i)
-# plot=plt.plot(np.arange(0,len(res)),res)
-# plot.show()
-# output=signal.wiener(output)  
 write("./beamformingarray/AudioTests/8.wav", 48000, output)
