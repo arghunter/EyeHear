@@ -49,23 +49,13 @@ while i + frame_len < N:# while i<=0:#
         
         global_covar[:, :, k] = mu * global_covar[:, :, k] + (1 - mu) * corr_mat
     # print(win_data.T[0].T.shape)
-    
-    X = np.fft.fft(win_data.T[0].T,axis=0);
-
-    Y = np.fft.fft(win_data.T[6].T,axis=0);
-
-    R = np.multiply(X,np.conj(Y));
-
-    tphat = np.real(np.fft.ifft(np.divide(R,np.abs(R)),axis=0));
-    tphat=np.reshape(tphat,(-1))
-    locs, _ = signal.find_peaks(tphat, height=None, distance=None)
-    sorted_indices = np.argsort(tphat[locs])[::-1]
-    pks = tphat[locs][sorted_indices]
-    locs = locs[sorted_indices]
-    print(locs[0:10])
-    td=locs[0]*1/FS
-    theta=np.degrees(np.arccos(343.3*td/6/d))%360-90
-    # print(theta)
+    x=pcm[i : i + frame_len,:].T[0].T
+    y=pcm[i : i + frame_len,:].T[5].T    
+    cross_corr=signal.correlate(x,y)
+    lags=signal.correlation_lags(len(x),len(y))
+    lag=lags[np.argmax(cross_corr)]
+    theta=np.degrees(np.arccos(343.3*lag/6/d))%360-90
+    print(lag)
     time = np.asmatrix(np.arange(0,num_channel)*d*np.sin(np.degrees(theta))/C)
     w=np.asmatrix(np.zeros((num_channel,N_f),dtype='complex128'))
     for k in range (0,N_f-1):
