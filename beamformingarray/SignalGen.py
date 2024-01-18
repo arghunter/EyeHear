@@ -30,7 +30,8 @@ class SignalGen:
     def delay_and_gain(self, samples):
         
         shifts=self.calculate_channel_shift()
-        print(self.delays)
+        print("Delays")
+        print(shifts)
         intshifts=np.floor(shifts)
         # print(intshifts)
         max_sample_shift=int(max(shifts))
@@ -57,6 +58,7 @@ class SignalGen:
             self.delays[i]=(i*self.spacing*np.cos(np.radians(doa))/v)*10**6
         shift=min(self.delays)
         self.delays+=-shift
+        print(self.delays)
     def update_gains(self,distance):
         for i in range(self.n_channels):
             self.gains[i]=1/distance**2

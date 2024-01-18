@@ -5,8 +5,9 @@ import sounddevice as sd
 from AudioWriter import AudioWriter
 #wav to arr as j Samples,Channels
 class IOStream: #sample duration in microseconds
-    def __init__(self,sample_duration=10000):
-        self.sample_duration=sample_duration
+    def __init__(self,frame_len=20000,frame_shift=10000):
+        self.frame_len=frame_len
+        self.frame_shift=frame_shift
         self.q=Queue()
         pass
     
@@ -21,32 +22,20 @@ class IOStream: #sample duration in microseconds
         else: 
             self.channels=1
         dur=(1/self.frequency)*10**6
-        n_samples = int(self.sample_duration/dur)
+        n_samples = int(self.frame_len/dur)
+        sample_shift=int(self.frame_shift/dur)
         iter=0
         
         while iter < self.arr.shape[0]:
             self.q.put(self.arr[iter:iter+n_samples])
-            iter+=n_samples
+            iter+=sample_shift
         if (self.arr[iter: self.arr.shape[0]]).shape[0]>0:
             self.q.put(self.arr[iter: self.arr.shape[0]])
     def wavToStream(self,filename):
         self.const=True
         file = read(filename)
         self.arr = np.array(file[1])
-        if(len(self.arr.shape)>1):
-            self.channels=len(file[1][0])
-        else: 
-            self.channels=1
-        self.frequency=file[0]
-        dur=(1/self.frequency)*10**6
-        n_samples = int(self.sample_duration/dur)
-        iter=0
-        
-        while iter < self.arr.shape[0]:
-            self.q.put(self.arr[iter:iter+n_samples])
-            iter+=n_samples
-        if (self.arr[iter: self.arr.shape[0]]).shape[0]>0:
-            self.q.put(self.arr[iter: self.arr.shape[0]])
+        self.arrToStream(self.arr,file[0])
             
     def audio_callback(self,indata, frames, time, status):
         for i in range(frames):
@@ -55,6 +44,8 @@ class IOStream: #sample duration in microseconds
                 self.buffer_head+=1
             else:
                 self.q.put(np.copy(self.buffer))
+                dur=(1/self.frequency)*10**6
+                self.buffer[0:int(self.frame_shift/dur)]=self.buffer[int(self.frame_shift/dur):len(self.buffer)]
                 self.buffer_head=0
         
             # print(frames)
@@ -64,7 +55,7 @@ class IOStream: #sample duration in microseconds
         self.frequency=frequency
         self.channels=channels
         dur=(1/self.frequency)*10**6
-        n_samples = int(self.sample_duration/dur)
+        n_samples = int(self.frame_len/dur)
         self.buffer=np.zeros((n_samples,channels))
         self.buffer_head=0
         stream=sd.InputStream(
@@ -77,14 +68,14 @@ class IOStream: #sample duration in microseconds
         
         return self.q.get()
 
-# sd.default.device=18
+# # sd.default.device=18
 # io= IOStream()
-# io.streamAudio(48000,16)
-# # io.wavToStream("./beamformingarray/test1.wav")
+# # io.streamAudio(48000,16)
+# io.wavToStream("./beamformingarray/AudioTests/test1.wav")
 # writer= AudioWriter()
 # for i in range(300):
 #     # print(type(io.getNextSample()))
 #     writer.add_sample(io.getNextSample())
 # # print(io.arr.shape)
 # # print(writer.data.shape)
-# writer.write("./beamformingarray/test4.wav",48000)   
+# writer.write("./beamformingarray/AudioTests/test20.wav",48000)   

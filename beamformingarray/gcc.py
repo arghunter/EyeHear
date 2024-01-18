@@ -62,9 +62,9 @@ import matplotlib.pyplot as plt
 
 # io= IOStream(sample_duration=20000)
 # io.wavToStream("./beamformingarray/AudioTests/test_input_sig.wav")
-file = read("./beamformingarray/AudioTests/2035F.wav")
+file = read("./beamformingarray/AudioTests/test_input_sig_2_1.wav")
 
-pcm=np.array(file[1])/32767
+pcm=np.array(file[1])
 print(np.max(pcm))
 FS=file[0]
 N=pcm.shape[0]
@@ -205,17 +205,30 @@ N=pcm.shape[0]
 
 
 
+from SignalGen import SignalGen
 
 
+frame_len=20000
 
-frame_len=960
+x = pcm[32000:32000+frame_len].T[0]
+gen=SignalGen(n_channels=2,spacing=0.1)
+gen.update_delays(0)
 
-x = pcm[32000:32000+frame_len]; 
-y=np.roll(x,-25)
+x=gen.delay_and_gain(np.reshape(x,(-1,1)))
+y=x.T[0]
+x=x.T[1]
+plt.plot(np.arange(0,len(x)),x)
+plt.show()
+# y= np.roll(x,-50)
 print(x.shape)
-x = x.astype(float) + 0.03 * np.random.randn(*x.shape)
-y = y.astype(float) + 0.03 * np.random.randn(*y.shape)
-
+# x = x.astype(float) + 0.5 * np.random.randn(*x.shape)
+# y = y.astype(float) + 0.5 * np.random.randn(*y.shape)
+cross_corr=signal.correlate(x,y)
+lags=signal.correlation_lags(len(x),len(y))
+lag=lags[np.argmax(cross_corr)]
+print(lag)
+plt.plot(np.arange(0,len(cross_corr)),cross_corr)
+plt.show()
 
 X = np.fft.fft(x,axis=0);
 
