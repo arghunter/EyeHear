@@ -6,7 +6,7 @@ from time import time as time1
 
 # io= IOStream(sample_duration=20000)
 # io.wavToStream("./beamformingarray/AudioTests/test_input_sig.wav")
-file = read("./beamformingarray/AudioTests/test_input_sig_2_1.wav")
+file = read("./beamformingarray/AudioTests/test_input_sig.wav")
 
 pcm=np.array(file[1])/32767
 print(np.max(pcm))
@@ -25,7 +25,7 @@ win=win*frame_shift/sum(win) # why?
 win_multi=np.tile(win,(num_channel,1)).T
 frame_num=int(np.floor((N-frame_len)/frame_shift+1));
 # print(frame_num)
-N=31000
+# N=31000
 output=np.zeros((N,1))
 N_f=int(stft_len/2)+1#Num frequencies
 global_covar=np.zeros((num_channel,num_channel,N_f),dtype='complex128')
@@ -36,7 +36,8 @@ while i + frame_len < N:# while i<=0:#
     t1=int(time1() * 1000)
     # print(pcm[j : j + frame_len,:].shape)
     win_data = np.asmatrix(pcm[i : i + frame_len,:]*win_multi)
-    # print(win_data)
+    
+    print(i)
     spectrum=np.asmatrix(np.fft.rfft(win_data,stft_len,axis=0))
     # print(spectrum.shape)
     if frame_count < exp_avg_param:
@@ -49,13 +50,14 @@ while i + frame_len < N:# while i<=0:#
         
         global_covar[:, :, k] = mu * global_covar[:, :, k] + (1 - mu) * corr_mat
     # print(win_data.T[0].T.shape)
-    x=pcm[i : i + frame_len,:].T[0].T
-    y=pcm[i : i + frame_len,:].T[5].T    
-    cross_corr=signal.correlate(x,y)
-    lags=signal.correlation_lags(len(x),len(y))
-    lag=lags[np.argmax(cross_corr)]
-    theta=np.degrees(np.arccos(343.3*lag/6/d))%360-90
-    print(lag)
+    # x=pcm[i : i + frame_len,:].T[0].T
+    # y=pcm[i : i + frame_len,:].T[5].T    
+    # cross_corr=signal.correlate(x,y)
+    # lags=signal.correlation_lags(len(x),len(y))
+    # lag=lags[np.argmax(cross_corr)]
+    # theta=np.degrees(np.arccos(343.3*lag/6/d))%360-90
+    # print(lag)
+    theta=0
     time = np.asmatrix(np.arange(0,num_channel)*d*np.sin(np.degrees(theta))/C)
     w=np.asmatrix(np.zeros((num_channel,N_f),dtype='complex128'))
     for k in range (0,N_f-1):
@@ -77,7 +79,7 @@ while i + frame_len < N:# while i<=0:#
     res=np.real(res_comp)
     
     res=res[0:frame_len]
-    
+    print((output[i:i + frame_len, :]).shape)
     output[i:i + frame_len, :] += res
     
     frame_count = frame_count + 1;
