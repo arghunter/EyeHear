@@ -1,26 +1,26 @@
 import numpy as np
 import scipy.signal as signal
 import matplotlib.pyplot as plt
-# N = 8000; 
+N = 8000; 
 
-# Fs = 48000; 
+Fs = 48000; 
 
-# Ts = 1/Fs; #
+Ts = 1/Fs; #
 
-# Ndelay = 100;
-# rsig = np.random.randn(N*2, 1)
-# print(min(rsig))
+Ndelay = 100;
+rsig = np.random.randn(N*2, 1)
+print(min(rsig))
 
-# x = rsig[0:N];  
+x = rsig[0:N];  
 
-# y=rsig[Ndelay:(Ndelay + N)]
-# x+=0.3*np.random.randn(*x.shape)
-# y+=0.3*np.random.randn(*x.shape)
-# X = np.fft.fft(x,axis=0);
+y=rsig[Ndelay:(Ndelay + N)]
+x+=0.3*np.random.randn(*x.shape)
+y+=0.3*np.random.randn(*x.shape)
+X = np.fft.fft(x,axis=0);
 
-# Y = np.fft.fft(y,axis=0);
+Y = np.fft.fft(y,axis=0);
 
-# R = np.multiply(X,np.conj(Y));
+R = np.multiply(X,np.conj(Y));
 
 # tphat = np.real(np.fft.ifft(np.divide(R,np.abs(R)),axis=0));
 # tphat=np.reshape(tphat,(-1))
@@ -209,21 +209,21 @@ N=pcm.shape[0]
 
 
 frame_len=960
-
-x = pcm[32000:32000+frame_len]; 
-y=np.roll(x,-25)
+print(pcm.shape)
+x = pcm[32000:32000+frame_len].T; 
+y=np.roll(x,50)
 print(x.shape)
-x = x.astype(float) + 0.03 * np.random.randn(*x.shape)
-y = y.astype(float) + 0.03 * np.random.randn(*y.shape)
+x = x.astype(float) + 0.4 * np.random.randn(*x.shape)
+y = y.astype(float) + 0.4 * np.random.randn(*y.shape)
 
 
-X = np.fft.fft(x,axis=0);
+X = np.fft.fft(x,axis=0,n=len(x)*2);
 
-Y = np.fft.fft(y,axis=0);
+Y = np.fft.fft(y,axis=0,n=len(y)*2);
 
 R = np.multiply(X,np.conj(Y));
 
-tphat = np.real(np.fft.ifft(np.divide(R,np.abs(R)),axis=0));
+tphat = np.real(np.fft.ifft(R,axis=0));
 tphat=np.reshape(tphat,(-1))
 locs, _ = signal.find_peaks(tphat, height=None, distance=None)
 sorted_indices = np.argsort(tphat[locs])[::-1]
