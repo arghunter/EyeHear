@@ -62,9 +62,9 @@ import matplotlib.pyplot as plt
 
 # io= IOStream(sample_duration=20000)
 # io.wavToStream("./beamformingarray/AudioTests/test_input_sig.wav")
-file = read("./beamformingarray/AudioTests/test_input_sig_2_1.wav")
+file = read("./beamformingarray/AudioTests/2035F.wav")
 
-pcm=np.array(file[1])
+pcm=np.array(file[1])/32767
 print(np.max(pcm))
 FS=file[0]
 N=pcm.shape[0]
@@ -205,18 +205,16 @@ N=pcm.shape[0]
 
 
 
-from SignalGen import SignalGen
 
 
-frame_len=20000
 
 frame_len=960
 print(pcm.shape)
 x = pcm[32000:32000+frame_len].T; 
 y=np.roll(x,50)
 print(x.shape)
-x = x.astype(float) + 0.4 * np.random.randn(*x.shape)
-y = y.astype(float) + 0.4 * np.random.randn(*y.shape)
+x = x.astype(float) + 0.3 * np.random.randn(*x.shape)
+y = y.astype(float) + 0.3 * np.random.randn(*y.shape)
 
 
 X = np.fft.fft(x,axis=0,n=len(x)*2);
