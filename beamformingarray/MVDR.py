@@ -3,7 +3,7 @@ from scipy.io.wavfile import read
 from scipy.io.wavfile import write
 import scipy.signal as signal
 from time import time as time1
-
+from AudioWriter import AudioWriter
 # io= IOStream(sample_duration=20000)
 # io.wavToStream("./beamformingarray/AudioTests/test_input_sig.wav")
 file = read("./beamformingarray/AudioTests/test_input_sig.wav")
@@ -32,6 +32,7 @@ global_covar=np.zeros((num_channel,num_channel,N_f),dtype='complex128')
 frame_count=1
 i=0
 mu=0
+aw=AudioWriter()
 while i + frame_len < N:# while i<=0:# 
     t1=int(time1() * 1000)
     # print(pcm[j : j + frame_len,:].shape)
@@ -79,7 +80,8 @@ while i + frame_len < N:# while i<=0:#
     res=np.real(res_comp)
     
     res=res[0:frame_len]
-    print((output[i:i + frame_len, :]).shape)
+    # print((output[i:i + frame_len, :]).shape)
+    aw.add_sample(res,frame_shift)
     output[i:i + frame_len, :] += res
     
     frame_count = frame_count + 1;
@@ -87,3 +89,4 @@ while i + frame_len < N:# while i<=0:#
    
     print(i)
 write("./beamformingarray/AudioTests/8.wav", 48000, output)
+aw.write("./beamformingarray/AudioTests/9.wav",48000)
