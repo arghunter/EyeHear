@@ -205,7 +205,7 @@ N=pcm.shape[0]
 
 
 
-
+v=340.3
 
 
 frame_len=960
@@ -213,8 +213,8 @@ print(pcm.shape)
 x = pcm[32000:32000+frame_len].T; 
 y=np.roll(x,50)
 print(x.shape)
-x = x.astype(float) + 0.3 * np.random.randn(*x.shape)
-y = y.astype(float) + 0.3 * np.random.randn(*y.shape)
+x = x.astype(float) + 0.1* np.random.randn(*x.shape)
+y = y.astype(float) + 0.1 * np.random.randn(*y.shape)
 
 
 X = np.fft.fft(x,axis=0,n=len(x)*2);
@@ -223,13 +223,14 @@ Y = np.fft.fft(y,axis=0,n=len(y)*2);
 
 R = np.multiply(X,np.conj(Y));
 
-tphat = np.real(np.fft.ifft(R,axis=0));
+tphat = np.real(np.fft.ifft(R/np.abs(R),axis=0));
 tphat=np.reshape(tphat,(-1))
 locs, _ = signal.find_peaks(tphat, height=None, distance=None)
 sorted_indices = np.argsort(tphat[locs])[::-1]
 pks = tphat[locs][sorted_indices]
 locs = locs[sorted_indices]
 
+print(ang)
 print(locs[0:10])
 print(pks[0:10])
 plt.plot(np.arange(0,len(tphat)),tphat)

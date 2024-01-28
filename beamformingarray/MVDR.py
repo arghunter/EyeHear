@@ -4,9 +4,11 @@ from scipy.io.wavfile import write
 import scipy.signal as signal
 from time import time as time1
 from AudioWriter import AudioWriter
+from VAD import VAD
+import matplotlib.pyplot as plt
 # io= IOStream(sample_duration=20000)
 # io.wavToStream("./beamformingarray/AudioTests/test_input_sig.wav")
-file = read("./beamformingarray/AudioTests/test_input_sig.wav")
+file = read("./beamformingarray/AudioTests/test_input_sig_1.wav")
 
 pcm=np.array(file[1])/32767
 print(np.max(pcm))
@@ -33,12 +35,14 @@ frame_count=1
 i=0
 mu=0
 aw=AudioWriter()
+noise=np.zeros(frame_num)
+vad=VAD(48000)
 while i + frame_len < N:# while i<=0:# 
     t1=int(time1() * 1000)
     # print(pcm[j : j + frame_len,:].shape)
     win_data = np.asmatrix(pcm[i : i + frame_len,:]*win_multi)
     
-    print(i)
+    # print(i)
     spectrum=np.asmatrix(np.fft.rfft(win_data,stft_len,axis=0))
     # print(spectrum.shape)
     if frame_count < exp_avg_param:
@@ -58,7 +62,44 @@ while i + frame_len < N:# while i<=0:#
     # lag=lags[np.argmax(cross_corr)]
     # theta=np.degrees(np.arccos(343.3*lag/6/d))%360-90
     # print(lag)
-    theta=0
+    noise[frame_count-1]
+    data=win_data
+    speech=vad.is_speech(win_data)
+    if speech:
+        noise[frame_count-1]=1
+        x=pcm[i : i + frame_len,:].T[0].T
+        y=pcm[i : i + frame_len,:].T[6].T
+        X = np.fft.fft(x,axis=0,n=len(x)*2);
+
+        Y = np.fft.fft(y,axis=0,n=len(y)*2);
+
+        R = np.multiply(X,np.conj(Y));
+
+        tphat = np.real(np.fft.ifft(R/np.abs(R),axis=0));
+        tphat=np.reshape(tphat,(-1))
+        tphat=np.concatenate([tphat[len(x):2*len(x)],tphat[0:len(x)]])
+        locs, _ = signal.find_peaks(tphat, height=None, distance=None)
+        sorted_indices = np.argsort(tphat[locs])[::-1]
+        pks = tphat[locs][sorted_indices]
+        locs = locs[sorted_indices]
+        dif=1/FS*(locs[0]-960)
+        dif=343.3*dif/6/d
+        if dif<-1:
+            dif=-1
+        if dif>1:
+            dif=1
+        ang=np.degrees(np.arccos(dif))%360-90
+
+        
+        # print(locs[0:10])
+        # print(pks[0:10])
+        # print(ang)
+        
+        # plt.plot(np.arange(0,len(tphat)),tphat)
+        # plt.show()
+
+    
+    # theta=0
     time = np.asmatrix(np.arange(0,num_channel)*d*np.sin(np.degrees(theta))/C)
     w=np.asmatrix(np.zeros((num_channel,N_f),dtype='complex128'))
     for k in range (0,N_f-1):
@@ -87,6 +128,6 @@ while i + frame_len < N:# while i<=0:#
     frame_count = frame_count + 1;
     i = i + frame_shift;
    
-    print(i)
-write("./beamformingarray/AudioTests/8.wav", 48000, output)
-aw.write("./beamformingarray/AudioTests/9.wav",48000)
+    # print(i)
+write("./beamformingarray/AudioTests/8noise.wav", int(48000/960), noise)
+aw.write("./beamformingarray/AudioTests/10.wav",48000)

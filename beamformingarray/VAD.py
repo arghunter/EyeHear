@@ -1,4 +1,4 @@
-import webrtcvad
+
 from IOStream import IOStream
 import numpy as np
 from AudioWriter import AudioWriter
@@ -6,17 +6,16 @@ from AudioWriter import AudioWriter
 
 class VAD:
     
-    def __init__(self,sample_rate=48000, agressiveness=3):
+    def __init__(self,sample_rate=48000):
         self.sample_rate=sample_rate
-        self.agressiveness=agressiveness
-        self.vad=webrtcvad.Vad(self.agressiveness)
     def is_speech(self,samples):
-        if(len(samples)%(self.sample_rate/100)==0):
-            edited=np.int16(32767*samples).tobytes()
-        # print(len(edited))
-            return self.vad.is_speech(edited, 48000)
-        else:
+        # is_noise = 0
+        
+        energy = np.sum(np.square(samples))
+        # print("Energy: ", energy)
+        if energy < 80:
             return False
+        return True
 # vad = webrtcvad.Vad()
 # vad.set_mode(3)
 
