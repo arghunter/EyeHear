@@ -4,17 +4,19 @@ from scipy.io.wavfile import write
 import scipy.signal as signal
 from IOStream import IOStream
 from AudioWriter import AudioWriter
+from VAD import VAD
 
 C=343.3
 class Beamformer():
     
-    def __init__(self,sample_rate=48000,spacing=0.028,num_channels=8,exp_avg=50,frame_len=960,stft_len=1024):
+    def __init__(self,sample_rate=48000,spacing=np.array([0,0.028,0.056,0.084,0.112,0.14,0.168,0.196]),num_channels=8,exp_avg=50,frame_len=960,stft_len=1024):
         self.spacing=spacing
         self.num_channels=num_channels
         self.exp_avg=exp_avg
         self.frame_count=1
         self.frame_len=frame_len
         self.stft_len=stft_len
+        self.stftd2=int(stft_len/2)
         self.sample_rate=sample_rate
         self.frame_shift=int(frame_len/2)
         win=np.hanning(frame_len)
@@ -23,6 +25,8 @@ class Beamformer():
         self.N_f=int(stft_len/2)+1
         self.mu=0
         self.global_covar=np.zeros((num_channels,num_channels,self.N_f),dtype='complex128')
+        self.vad=VAD(48000)
+        self.theta=0
     def beamform(self,frame):
         if(len(frame)!=self.frame_len):
             return np.zeros((self.frame_len,1))
@@ -41,16 +45,33 @@ class Beamformer():
             # print(cov_mat.shape)
             
             self.global_covar[:, :, k] = self.mu * self.global_covar[:, :, k] + (1 - self.mu) * corr_mat
-        # print(win_data.T[0].T.shape)
-        # x=pcm[i : i + frame_len,:].T[0].T
-        # y=pcm[i : i + frame_len,:].T[5].T    
-        # cross_corr=signal.correlate(x,y)
-        # lags=signal.correlation_lags(len(x),len(y))
-        # lag=lags[np.argmax(cross_corr)]
-        # theta=np.degrees(np.arccos(343.3*lag/6/d))%360-90
-        # print(lag)
-        theta=0
-        time = np.asmatrix(np.arange(0,self.num_channels)*self.spacing*np.sin(np.degrees(theta))/C)
+    
+        
+        speech=self.vad.is_speech(win_data)
+        if speech:
+            
+
+            X=spectrum.T[0].T
+
+            Y=spectrum.T[6].T
+            R = np.multiply(X,np.conj(Y));
+        
+            tphat = np.real(np.fft.ifft(R/np.abs(R),axis=0));
+            tphat=np.reshape(tphat,(-1))
+            tphat=np.concatenate([tphat[self.stftd2:self.stft_len],tphat[0:self.stftd2]])
+            locs, _ = signal.find_peaks(tphat, height=None, distance=None)
+            sorted_indices = np.argsort(tphat[locs])[::-1]
+            pks = tphat[locs][sorted_indices]
+            locs = locs[sorted_indices]
+            dif=1/self.sample_rate*(locs[0]-self.stftd2)
+            dif=C*dif/(self.spacing[6]-self.spacing[0])
+            if dif<-1:
+                dif=-1
+            if dif>1:
+                dif=1
+            ang=np.degrees(np.arccos(dif))%360-90
+            self.theta=ang
+        time = np.asmatrix(self.spacing*np.sin(np.degrees(self.theta))/C)
         w=np.asmatrix(np.zeros((self.num_channels,self.N_f),dtype='complex128'))
         for k in range (0,self.N_f-1):
             f=k*self.sample_rate/self.stft_len;

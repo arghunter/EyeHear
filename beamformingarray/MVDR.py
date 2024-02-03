@@ -8,7 +8,7 @@ from VAD import VAD
 import matplotlib.pyplot as plt
 # io= IOStream(sample_duration=20000)
 # io.wavToStream("./beamformingarray/AudioTests/test_input_sig.wav")
-file = read("./beamformingarray/AudioTests/test_input_sig_1.wav")
+file = read("./beamformingarray/AudioTests/test_input_sig.wav")
 
 pcm=np.array(file[1])/32767
 print(np.max(pcm))
@@ -18,14 +18,16 @@ stft_len=1024
 num_channel=pcm.shape[1]
 frame_len=960
 frame_shift=480 # 50% overlap
-exp_avg_param=50
+exp_avg_param=5
 C=343.3
-d=0.028
+spacing=0.028
+d=np.arange(0,num_channel)*spacing
 theta=0
 win=np.hanning(frame_len)
 win=win*frame_shift/sum(win) # why?
 win_multi=np.tile(win,(num_channel,1)).T
 frame_num=int(np.floor((N-frame_len)/frame_shift+1));
+stftd2=int(stft_len/2)
 # print(frame_num)
 # N=31000
 output=np.zeros((N,1))
@@ -44,7 +46,8 @@ while i + frame_len < N:# while i<=0:#
     
     # print(i)
     spectrum=np.asmatrix(np.fft.rfft(win_data,stft_len,axis=0))
-    # print(spectrum.shape)
+
+
     if frame_count < exp_avg_param:
         mu=(frame_count-1)/frame_count
     for k in range(0,N_f):
@@ -63,32 +66,32 @@ while i + frame_len < N:# while i<=0:#
     # theta=np.degrees(np.arccos(343.3*lag/6/d))%360-90
     # print(lag)
     noise[frame_count-1]
-    data=win_data
+    
     speech=vad.is_speech(win_data)
     if speech:
         noise[frame_count-1]=1
-        x=pcm[i : i + frame_len,:].T[0].T
-        y=pcm[i : i + frame_len,:].T[6].T
-        X = np.fft.fft(x,axis=0,n=len(x)*2);
 
-        Y = np.fft.fft(y,axis=0,n=len(y)*2);
+        X=spectrum.T[0].T
 
+        Y=spectrum.T[6].T
         R = np.multiply(X,np.conj(Y));
-
+       
         tphat = np.real(np.fft.ifft(R/np.abs(R),axis=0));
         tphat=np.reshape(tphat,(-1))
-        tphat=np.concatenate([tphat[len(x):2*len(x)],tphat[0:len(x)]])
+        tphat=np.concatenate([tphat[stftd2:stft_len],tphat[0:stftd2]])
         locs, _ = signal.find_peaks(tphat, height=None, distance=None)
         sorted_indices = np.argsort(tphat[locs])[::-1]
         pks = tphat[locs][sorted_indices]
         locs = locs[sorted_indices]
-        dif=1/FS*(locs[0]-960)
-        dif=343.3*dif/6/d
+        dif=1/FS*(locs[0]-stftd2)
+        dif=343.3*dif/6/spacing
         if dif<-1:
             dif=-1
         if dif>1:
             dif=1
         ang=np.degrees(np.arccos(dif))%360-90
+        theta=ang
+        # print(ang)
 
         
         # print(locs[0:10])
@@ -100,7 +103,7 @@ while i + frame_len < N:# while i<=0:#
 
     
     # theta=0
-    time = np.asmatrix(np.arange(0,num_channel)*d*np.sin(np.degrees(theta))/C)
+    time = np.asmatrix(d*np.sin(np.degrees(theta))/C)
     w=np.asmatrix(np.zeros((num_channel,N_f),dtype='complex128'))
     for k in range (0,N_f-1):
         f=k*FS/stft_len;
@@ -127,7 +130,8 @@ while i + frame_len < N:# while i<=0:#
     
     frame_count = frame_count + 1;
     i = i + frame_shift;
-   
+    # print((time1() * 1000)-t1)
     # print(i)
+# output=signal.wiener(output)
 write("./beamformingarray/AudioTests/8noise.wav", int(48000/960), noise)
 aw.write("./beamformingarray/AudioTests/10.wav",48000)

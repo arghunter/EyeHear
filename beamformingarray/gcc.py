@@ -222,6 +222,7 @@ X = np.fft.fft(x,axis=0,n=len(x)*2);
 Y = np.fft.fft(y,axis=0,n=len(y)*2);
 
 R = np.multiply(X,np.conj(Y));
+# print(R.shape)
 
 tphat = np.real(np.fft.ifft(R/np.abs(R),axis=0));
 tphat=np.reshape(tphat,(-1))

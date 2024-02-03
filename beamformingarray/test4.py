@@ -339,6 +339,7 @@ if True:
     # MUSIC Algorithm (part that doesn't change with theta_i)
     num_expected_signals = 3 # Try changing this!
     R = r @ r.conj().T # Calc covariance matrix, it's Nr x Nr
+    print(R.shape)
     w, v = np.linalg.eig(R) # eigenvalue decomposition, v[:,i] is the eigenvector corresponding to the eigenvalue w[i]
 
     if False:
@@ -373,7 +374,7 @@ if True:
     ax.set_theta_direction(-1) # increase clockwise
     ax.set_rlabel_position(30)  # Move grid labels away from other labels
     plt.show()
-    fig.savefig('../_images/doa_music.svg', bbox_inches='tight')
+    # fig.savefig('../_images/doa_music.svg', bbox_inches='tight')
     exit()
 
 
