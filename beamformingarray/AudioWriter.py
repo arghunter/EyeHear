@@ -8,12 +8,12 @@ class AudioWriter:
         if not hasattr(self,'data') :
             self.data = samples
             self.dpos=overlap
-            print(self.data.shape)
+            # print(self.data.shape)
         else:
             # print(self.data.shape)
             # print(samples.shape)
             # print('x')
-            print(self.data.shape)
+            # print(self.data.shape)
             self.data=np.concatenate([self.data,np.zeros(((int(overlap)),self.data.shape[1]))])
             # self.data= np.concatenate([self.data,samples])
             self.data[self.dpos:len(self.data), :]+=samples

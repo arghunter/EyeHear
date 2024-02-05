@@ -38,44 +38,45 @@ class IOStream: #sample duration in microseconds
         self.arrToStream(self.arr,file[0])
             
     def audio_callback(self,indata, frames, time, status):
+        # print((frames))
         for i in range(frames):
+            print(".")
             if(self.buffer_head<self.buffer.shape[0]):
                 self.buffer[self.buffer_head]=indata[i]
                 self.buffer_head+=1
             else:
-                self.q.put(np.copy(self.buffer))
-                dur=(1/self.frequency)*10**6
-                self.buffer[0:int(self.frame_shift/dur)]=self.buffer[int(self.frame_shift/dur):len(self.buffer)]
+                self.q.put(np.copy(self.buffer))                
                 self.buffer_head=0
+
         
-            # print(frames)
         
     def streamAudio(self,frequency,channels):
         self.const=False
         self.frequency=frequency
         self.channels=channels
         dur=(1/self.frequency)*10**6
-        n_samples = int(self.frame_len/dur)
+        n_samples = int(self.frame_shift/dur)
         self.buffer=np.zeros((n_samples,channels))
         self.buffer_head=0
         stream=sd.InputStream(
             device=None, channels=self.channels,
             samplerate=self.frequency, callback=self.audio_callback)
         stream.start()
+        
     def complete(self):
         return self.const and self.q.empty()
     def getNextSample(self):
         
         return self.q.get()
 
-# # sd.default.device=18
+# sd.default.device=18
 # io= IOStream()
-# # io.streamAudio(48000,16)
-# io.wavToStream("./beamformingarray/AudioTests/test1.wav")
+# io.streamAudio(48000,8)
+# # io.wavToStream("./beamformingarray/AudioTests/test1.wav")
 # writer= AudioWriter()
-# for i in range(300):
-#     # print(type(io.getNextSample()))
-#     writer.add_sample(io.getNextSample())
-# # print(io.arr.shape)
-# # print(writer.data.shape)
+# while True:
+#     print((io.getNextSample()))
+    # writer.add_sample(io.getNextSample())
+# print(io.arr.shape)
+# print(writer.data.shape)
 # writer.write("./beamformingarray/AudioTests/test20.wav",48000)   

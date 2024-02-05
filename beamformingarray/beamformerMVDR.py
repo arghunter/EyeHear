@@ -26,7 +26,8 @@ class Beamformer():
         self.mu=0
         self.global_covar=np.zeros((num_channels,num_channels,self.N_f),dtype='complex128')
         self.vad=VAD(48000)
-        self.theta=0
+        self.theta=-0.1
+        self.speech=False
     def beamform(self,frame):
         if(len(frame)!=self.frame_len):
             return np.zeros((self.frame_len,1))
@@ -47,8 +48,9 @@ class Beamformer():
             self.global_covar[:, :, k] = self.mu * self.global_covar[:, :, k] + (1 - self.mu) * corr_mat
     
         
-        speech=self.vad.is_speech(win_data)
-        if speech:
+        self.speech=self.vad.is_speech(win_data)
+        # print(speech)
+        if self.speech:
             
 
             X=spectrum.T[0].T
@@ -71,6 +73,7 @@ class Beamformer():
                 dif=1
             ang=np.degrees(np.arccos(dif))%360-90
             self.theta=ang
+            # self.theta=22.5
         time = np.asmatrix(self.spacing*np.sin(np.degrees(self.theta))/C)
         w=np.asmatrix(np.zeros((self.num_channels,self.N_f),dtype='complex128'))
         for k in range (0,self.N_f-1):
@@ -97,12 +100,12 @@ class Beamformer():
         return res
         
 
-io=IOStream()
-aw=AudioWriter()
-file = read("./beamformingarray/AudioTests/test_input_sig.wav")
-beam=Beamformer()
-pcm=np.array(file[1])/32767
-io.arrToStream(pcm,48000)
-while(not io.complete()):
-    aw.add_sample(beam.beamform(io.getNextSample()),480)
-aw.write("./beamformingarray/AudioTests/10.wav",48000)
+# io=IOStream()
+# aw=AudioWriter()
+# file = read("./beamformingarray/AudioTests/test_input_sig.wav")
+# beam=Beamformer()
+# pcm=np.array(file[1])/32767
+# io.arrToStream(pcm,48000)
+# while(not io.complete()):
+#     aw.add_sample(beam.beamform(io.getNextSample()),480)
+# aw.write("./beamformingarray/AudioTests/10.wav",48000)

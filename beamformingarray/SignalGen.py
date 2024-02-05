@@ -6,7 +6,7 @@ from AudioWriter import AudioWriter
 from IOStream import IOStream
 from CrossCorrelator import CrossCorrelatior
 from scipy import signal
-v=340.3
+v=343.3
 
 
 
@@ -17,7 +17,7 @@ v=340.3
         
         
 class SignalGen:
-    def __init__(self,n_channels=8,spacing=0.03,sample_rate=48000):
+    def __init__(self,n_channels=8,spacing=np.array([0,0.028,0.056,0.084,0.112,0.14,0.168,0.196]),sample_rate=48000):
         self.n_channels = n_channels
         self.spacing = spacing
         self.sample_rate = sample_rate
@@ -54,8 +54,8 @@ class SignalGen:
         
         return channel_shifts
     def update_delays(self,doa): #doa in degrees, assuming plane wave as it is a far-field source
-        for i in range(self.n_channels):
-            self.delays[i]=(i*self.spacing*np.cos(np.radians(doa))/v)*10**6
+        
+        self.delays=(self.spacing*np.cos(np.radians(doa))/v)*10**6
         shift=min(self.delays)
         self.delays+=-shift
         print(self.delays)
@@ -65,13 +65,15 @@ class SignalGen:
 
 
     
-# gen=SignalGen(spacing=0.03)
-# writer= AudioWriter()
-# # sine=Chirp(start_freq=50,end_freq=150)
-# sine=Sine(frequency=50)
-# sine_data=sine.generate_wave(1)
-# gen.update_delays(0)
-# sine_data=gen.delay_and_gain(sine_data)
+gen=SignalGen()
+writer= AudioWriter()
+# sine=Chirp(start_freq=50,end_freq=150)
+sine=Sine(frequency=50)
+sine_data=sine.generate_wave(1)
+gen.update_delays(0)
+sine_data=gen.delay_and_gain(sine_data)
+writer.add_sample(sine_data,0)
+writer.write("./beamformingarray/AudioTests/1gen.wav",48000)
 # stream=IOStream()
 # stream.arrToStream(sine_data,48000)
 # cc=CrossCorrelatior(spacing=0.03)

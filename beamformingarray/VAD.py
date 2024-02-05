@@ -13,7 +13,7 @@ class VAD:
         
         energy = np.sum(np.square(samples))
         # print("Energy: ", energy)
-        if energy < 80:
+        if energy < 50:
             return False
         return True
 # vad = webrtcvad.Vad()
