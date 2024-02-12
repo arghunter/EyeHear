@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 file = read("./beamformingarray/AudioTests/test_input_sig.wav")
 
 pcm=np.array(file[1])/32767
-print(np.max(pcm))
+
 FS=file[0]
 N=pcm.shape[0]
 stft_len=1024
@@ -53,18 +53,10 @@ while i + frame_len < N:# while i<=0:#
     for k in range(0,N_f):
         cov_mat=np.dot(spectrum[k,:].T, np.conj(spectrum[k,:]))
         corr_mat=cov_mat/np.trace(cov_mat); 
-        # print(corr_mat.dtype)
-        # print(cov_mat.shape)
+
         
         global_covar[:, :, k] = mu * global_covar[:, :, k] + (1 - mu) * corr_mat
-    # print(win_data.T[0].T.shape)
-    # x=pcm[i : i + frame_len,:].T[0].T
-    # y=pcm[i : i + frame_len,:].T[5].T    
-    # cross_corr=signal.correlate(x,y)
-    # lags=signal.correlation_lags(len(x),len(y))
-    # lag=lags[np.argmax(cross_corr)]
-    # theta=np.degrees(np.arccos(343.3*lag/6/d))%360-90
-    # print(lag)
+
     noise[frame_count-1]
     
     speech=vad.is_speech(win_data)
@@ -133,5 +125,5 @@ while i + frame_len < N:# while i<=0:#
     # print((time1() * 1000)-t1)
     # print(i)
 # output=signal.wiener(output)
-write("./beamformingarray/AudioTests/8noise.wav", int(48000/960), noise)
+write("./beamformingarray/AudioTests/10.wav", int(48000), output)
 aw.write("./beamformingarray/AudioTests/10.wav",48000)

@@ -16,17 +16,19 @@ import numpy as np
 import sounddevice as sd
 ############### Import Modules ###############
 from IOStream import IOStream
-
+from BeamformerMVDR import Beamformer
+from MVDRAsync import MVDRasync
 ############### Constants ###############
 #SAMPLES_PER_FRAME = 10 #Number of mic reads concatenated within a single window
 SAMPLES_PER_FRAME = 100
 nfft = 1024#256#1024 #NFFT value for spectrogram
 overlap = 512#512 #overlap value for spectrogram
-rate = 16000 #sampling rate
+rate = 48000 #sampling rate
 sd.default.device=18
-stream = IOStream()
-stream.streamAudio(48000,8)
+stream = IOStream(20000,20000)
+stream.streamAudio(rate,8)
 im=0
+beamformer=MVDRasync(stream)
 # for i in range(10):
 #     print(stream.getNextSample().shape)
 ############### Functions ###############
@@ -37,9 +39,14 @@ inputs: audio stream and PyAudio object
 outputs: int16 array
 """
 def get_sample():
-    data = stream.getNextSample().T[0] *32767
+    if(not beamformer.q.empty()):
+        
+        frame=beamformer.q.get()*32767
+    else:
+        frame=np.zeros(960)
+    # print(data.shape)
     # print(data)
-    return data
+    return frame
 """
 get_specgram:
 takes the FFT to create a spectrogram of the given audio signal
@@ -65,6 +72,7 @@ def update_fig(n):
     data = get_sample()
     arr2D,freqs,bins = get_specgram(data,rate)
     im_data = im.get_array()
+    print((stream.q.qsize()))
     if n < SAMPLES_PER_FRAME:
         im_data = np.hstack((im_data,arr2D))
         im.set_array(im_data)
@@ -103,7 +111,7 @@ plt.gca().invert_yaxis()
 
 ############### Animate ###############
 anim = animation.FuncAnimation(fig,update_fig,blit = False,
-                            interval=10)
+                            interval=50)
 
                             
 try:

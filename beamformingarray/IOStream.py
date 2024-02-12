@@ -38,14 +38,15 @@ class IOStream: #sample duration in microseconds
         self.arrToStream(self.arr,file[0])
             
     def audio_callback(self,indata, frames, time, status):
-        # print((frames))
+        # print(("1"))
         for i in range(frames):
-            print(".")
-            if(self.buffer_head<self.buffer.shape[0]):
-                self.buffer[self.buffer_head]=indata[i]
+            # print('')
+            if(self.buffer_head<self.buffer2.shape[0]):
+                self.buffer2[self.buffer_head]=indata[i]
                 self.buffer_head+=1
             else:
-                self.q.put(np.copy(self.buffer))                
+                self.q.put(np.concatenate([self.buffer1,self.buffer2]))
+                self.buffer1=np.array(self.buffer2,copy=True)               
                 self.buffer_head=0
 
         
@@ -56,7 +57,8 @@ class IOStream: #sample duration in microseconds
         self.channels=channels
         dur=(1/self.frequency)*10**6
         n_samples = int(self.frame_shift/dur)
-        self.buffer=np.zeros((n_samples,channels))
+        self.buffer1=np.ones((n_samples,channels))
+        self.buffer2=np.ones((n_samples,channels))
         self.buffer_head=0
         stream=sd.InputStream(
             device=None, channels=self.channels,

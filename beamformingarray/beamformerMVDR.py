@@ -48,8 +48,9 @@ class Beamformer():
             self.global_covar[:, :, k] = self.mu * self.global_covar[:, :, k] + (1 - self.mu) * corr_mat
     
         
-        self.speech=self.vad.is_speech(win_data)
+        # self.speech=self.vad.is_speech(win_data)
         # print(speech)
+        self.speech=False
         if self.speech:
             
 
