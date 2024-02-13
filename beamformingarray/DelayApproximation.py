@@ -13,12 +13,16 @@ class DelayAproximator:
             dy = mic_pos[1] - pos[1]
             distance = np.sqrt(dx**2 + dy**2)
             distances.append(distance)
-        reference_distance = self.get_distances()[0]
+        reference_distance = distances[0]
         tdoa_values = []
-        for distance in self.get_distances()[1:]:
+        for distance in distances:
             time_diff = (distance - reference_distance) / v
-        tdoa_values.append(time_diff)
+            tdoa_values.append(time_diff)
         return tdoa_values
     
 
 
+approx=DelayAproximator([[0,0],[0.028,0],[0.056,0],[0.084,0],[0.112,0],[0.14,0],[0.168,0],[0.196,0]])
+pos=[-1,10]
+delays=approx.get_delays(pos)
+print(delays)
