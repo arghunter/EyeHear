@@ -5,7 +5,7 @@ import scipy.signal as signal
 from IOStream import IOStream
 from AudioWriter import AudioWriter
 from VAD import VAD
-
+from MUSIC import MUSIC
 C=343.3
 class Beamformer():
     
@@ -28,6 +28,7 @@ class Beamformer():
         self.vad=VAD(48000)
         self.theta=-0.1
         self.speech=False
+        self.MUSIC=MUSIC()
     def beamform(self,frame):
         if(len(frame)!=self.frame_len):
             return np.zeros((self.frame_len,1))
@@ -48,34 +49,34 @@ class Beamformer():
             self.global_covar[:, :, k] = self.mu * self.global_covar[:, :, k] + (1 - self.mu) * corr_mat
     
         
-        # self.speech=self.vad.is_speech(win_data)
+        self.speech=self.vad.is_speech(win_data)
         # print(speech)
-        self.speech=False
+        # self.speech=True
         if self.speech:
-            
+            self.theta=self.MUSIC.doa(self.global_covar)
 
-            X=spectrum.T[0].T
+            # X=spectrum.T[0].T
 
-            Y=spectrum.T[6].T
-            R = np.multiply(X,np.conj(Y));
+            # Y=spectrum.T[6].T
+            # R = np.multiply(X,np.conj(Y));
         
-            tphat = np.real(np.fft.ifft(R/np.abs(R),axis=0));
-            tphat=np.reshape(tphat,(-1))
-            tphat=np.concatenate([tphat[self.stftd2:self.stft_len],tphat[0:self.stftd2]])
-            locs, _ = signal.find_peaks(tphat, height=None, distance=None)
-            sorted_indices = np.argsort(tphat[locs])[::-1]
-            pks = tphat[locs][sorted_indices]
-            locs = locs[sorted_indices]
-            dif=1/self.sample_rate*(locs[0]-self.stftd2)
-            dif=C*dif/(self.spacing[6]-self.spacing[0])
-            if dif<-1:
-                dif=-1
-            if dif>1:
-                dif=1
-            ang=np.degrees(np.arccos(dif))%360-90
-            self.theta=ang
+            # tphat = np.real(np.fft.ifft(R/np.abs(R),axis=0));
+            # tphat=np.reshape(tphat,(-1))
+            # tphat=np.concatenate([tphat[self.stftd2:self.stft_len],tphat[0:self.stftd2]])
+            # locs, _ = signal.find_peaks(tphat, height=None, distance=None)
+            # sorted_indices = np.argsort(tphat[locs])[::-1]
+            # pks = tphat[locs][sorted_indices]
+            # locs = locs[sorted_indices]
+            # dif=1/self.sample_rate*(locs[0]-self.stftd2)
+            # dif=C*dif/(self.spacing[6]-self.spacing[0])
+            # if dif<-1:
+            #     dif=-1
+            # if dif>1:
+            #     dif=1
+            # ang=np.degrees(np.arccos(dif))%360-90
+            # self.theta=ang
             # self.theta=22.5
-        time = np.asmatrix(self.spacing*np.sin(np.degrees(self.theta))/C)
+        time = np.asmatrix(self.spacing*np.sin(np.radians(self.theta+90))/C)
         w=np.asmatrix(np.zeros((self.num_channels,self.N_f),dtype='complex128'))
         for k in range (0,self.N_f-1):
             f=k*self.sample_rate/self.stft_len;
@@ -94,19 +95,19 @@ class Beamformer():
         
         res_comp=(np.fft.ifft(summed_signal, axis=0))
         res=np.real(res_comp)
-        
+        print(self.frame_count)
         res=res[0:self.frame_len]
         # print((output[i:i + frame_len, :]).shape)
         self.frame_count+=1
         return res
         
 
-# io=IOStream()
-# aw=AudioWriter()
-# file = read("./beamformingarray/AudioTests/test_input_sig.wav")
-# beam=Beamformer()
-# pcm=np.array(file[1])/32767
-# io.arrToStream(pcm,48000)
-# while(not io.complete()):
-#     aw.add_sample(beam.beamform(io.getNextSample()),480)
-# aw.write("./beamformingarray/AudioTests/10.wav",48000)
+io=IOStream()
+aw=AudioWriter()
+file = read("./beamformingarray/AudioTests/test_input_sig.wav")
+beam=Beamformer()
+pcm=np.array(file[1])/32767
+io.arrToStream(pcm,48000)
+while(not io.complete()):
+    aw.add_sample(beam.beamform(io.getNextSample()),480)
+aw.write("./beamformingarray/AudioTests/10.wav",48000)
