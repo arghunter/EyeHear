@@ -51,7 +51,7 @@ class Beamformer():
         
         self.speech=self.vad.is_speech(win_data)
         # print(speech)
-        # self.speech=True
+        self.speech=True
         if self.speech:
             self.theta=self.MUSIC.doa(self.global_covar)
 
