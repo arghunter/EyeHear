@@ -4,7 +4,7 @@ import scipy.signal as signal
 v=343.3
 class MUSIC:
     
-    def __init__(self,sample_rate=48000,spacing=np.array([0,0.028,0.056,0.084,0.112,0.14,0.168,0.196]),num_channels=8,frame_len=960,stft_len=1024):
+    def __init__(self,sample_rate=48000,spacing=np.array([0,0.028,0.056,0.084,0.112,0.14,0.168,0.196]),num_channels=8,frame_len=960,stft_len=1024,nsrc=3,acc=10):
         self.spacing=spacing
         self.num_channels=num_channels
 
@@ -14,13 +14,14 @@ class MUSIC:
         self.sample_rate=sample_rate
         self.frame_shift=int(frame_len/2)
         self.N_f=int(stft_len/2)+1
-        self.global_covar=np.zeros((num_channels,num_channels,self.N_f),dtype='complex128')
-        
+        self.acc=acc
        
        
         self.angles = np.arange(-90, 91, 1)
         self.Ng = len(self.angles)
-        self.nsrc = 2
+        self.nsrc = nsrc
+        self.sources=np.zeros(nsrc)
+        self.weights=np.ones(nsrc)
     def doa(self,global_covar):
         import numpy as np
 
@@ -50,5 +51,29 @@ class MUSIC:
         sorted_indices = np.argsort(w[locs])[::-1]
         pks = w[locs][sorted_indices]
         locs = locs[sorted_indices]
+        print(locs[0:10])
+        print(pks[0:10])
         return locs[0]
-        # print(locs[0:10])
+    def source_tracker(self, locs,pks):
+        if True or self.weights[0]==0:
+            count=0
+            
+            for i in range(len(locs)):
+                shift=False
+                if count<self.nsrc:
+                    while count<self.nsrc and (locs[i]-self.sources[count])>self.acc:
+                        count+=1
+                        shift=True
+                    if count==self.nsrc:
+                        count-=1
+                    if shift:
+                        self.sources[count]=locs[i]
+                        self.weights[count]=pks[i]
+                        
+                    else:
+                        self.sources[count]= self.weights[count]*self.sources[count]+locs[i]*pks[i]/(pks[i]+self.weights[count])
+                        self.weights[count]+=pks[i]
+        else:
+            pass
+            # Decrease by percent then samething and sorting
+        
