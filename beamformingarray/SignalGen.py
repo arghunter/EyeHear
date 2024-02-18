@@ -7,7 +7,7 @@ from IOStream import IOStream
 from CrossCorrelator import CrossCorrelatior
 from scipy import signal
 v=343.3
-
+from DelayApproximation import DelayAproximator
 
 
 # def angleToWav(angles,signals,n_mics,spacing,samplerate=48000):
@@ -17,14 +17,14 @@ v=343.3
         
         
 class SignalGen:
-    def __init__(self,n_channels=8,spacing=np.array([0,0.028,0.056,0.084,0.112,0.14,0.168,0.196]),sample_rate=48000):
+    def __init__(self,n_channels=8,spacing=np.array([[0,0],[0.028,0],[0.056,0],[0.084,0],[0.112,0],[0.14,0],[0.168,0],[0.196,0]]),sample_rate=48000):
         self.n_channels = n_channels
         self.spacing = spacing
         self.sample_rate = sample_rate
         self.delays = np.zeros(n_channels) #in microseconds
         self.gains = np.ones(n_channels) # multiplier
         self.sample_dur= 1/sample_rate *10**6 #Duration of a sample in microseconds
-   
+        self.delay_approx=DelayAproximator(self.spacing)
     
 
     def delay_and_gain(self, samples):
@@ -55,25 +55,31 @@ class SignalGen:
         return channel_shifts
     def update_delays(self,doa): #doa in degrees, assuming plane wave as it is a far-field source
         
-        self.delays=(self.spacing*np.cos(np.radians(doa))/v)*10**6
-        shift=min(self.delays)
-        self.delays+=-shift
-        print(self.delays)
+        self.delays=np.array(self.delay_approx.get_delays(DelayAproximator.get_pos(doa,2)))*10**6
+        # shift=min(self.delays)
+        # self.delays+=-shift
+        # print(self.delays)
     def update_gains(self,distance):
         for i in range(self.n_channels):
             self.gains[i]=1/distance**2
 
 
-    
-gen=SignalGen()
-writer= AudioWriter()
-# sine=Chirp(start_freq=50,end_freq=150)
-sine=Sine(frequency=50)
-sine_data=sine.generate_wave(1)
-gen.update_delays(0)
-sine_data=gen.delay_and_gain(sine_data)
-writer.add_sample(sine_data,0)
-writer.write("./beamformingarray/AudioTests/1gen.wav",48000)
+approx=DelayAproximator([[0,0],[0.028,0],[0.056,0],[0.084,0],[0.112,0],[0.14,0],[0.168,0],[0.196,0]])
+pos=[1.414,1.414]
+delays=approx.get_delays(pos)
+print(delays)
+gen= SignalGen()
+gen.update_delays(45)
+print(gen.delays/10**6)
+# gen=SignalGen()
+# writer= AudioWriter()
+# # sine=Chirp(start_freq=50,end_freq=150)
+# sine=Sine(frequency=50)
+# sine_data=sine.generate_wave(1)
+# gen.update_delays(0)
+# sine_data=gen.delay_and_gain(sine_data)
+# writer.add_sample(sine_data,0)
+# writer.write("./beamformingarray/AudioTests/1gen.wav",48000)
 # stream=IOStream()
 # stream.arrToStream(sine_data,48000)
 # cc=CrossCorrelatior(spacing=0.03)

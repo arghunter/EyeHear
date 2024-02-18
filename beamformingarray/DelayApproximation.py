@@ -19,10 +19,12 @@ class DelayAproximator:
             time_diff = (distance - reference_distance) / v
             tdoa_values.append(time_diff)
         return tdoa_values
+    def get_pos(angle,dist):
+        angle=np.radians(angle)
+        pos=[dist*np.cos(angle),dist*np.sin(angle)]
+        print(pos)
+        return pos
+
     
 
 
-approx=DelayAproximator([[0,0],[0.028,0],[0.056,0],[0.084,0],[0.112,0],[0.14,0],[0.168,0],[0.196,0]])
-pos=[-1,10]
-delays=approx.get_delays(pos)
-print(delays)
