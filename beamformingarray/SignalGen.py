@@ -30,8 +30,8 @@ class SignalGen:
     def delay_and_gain(self, samples):
         
         shifts=self.calculate_channel_shift()
-        print("Delays")
-        print(shifts)
+        # print("Delays")
+        # print(shifts)
         intshifts=np.floor(shifts)
         # print(intshifts)
         max_sample_shift=int(max(shifts))

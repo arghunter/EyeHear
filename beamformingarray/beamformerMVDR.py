@@ -6,6 +6,7 @@ from IOStream import IOStream
 from AudioWriter import AudioWriter
 from VAD import VAD
 from MUSIC import MUSIC
+import multiprocessing
 C=343.3
 class Beamformer():
     
@@ -29,6 +30,7 @@ class Beamformer():
         self.theta=-0.1
         self.speech=False
         self.MUSIC=MUSIC()
+        
     def beamform(self,frame):
         if(len(frame)!=self.frame_len):
             return np.zeros((self.frame_len,1))
@@ -53,8 +55,13 @@ class Beamformer():
         # print(speech)
         # self.speech=True
         if self.speech:
-            self.theta=self.MUSIC.doa(self.global_covar)
-
+            # self.theta=self.MUSIC.doa(self.global_covar)
+            covar=self.global_covar.copy()
+            args=[covar]
+            # print((covar.shape))
+            t=multiprocessing.Process(target=self.MUSIC.doa,args=(covar,))
+            t.start()
+            t.join()
             # X=spectrum.T[0].T
 
             # Y=spectrum.T[6].T

@@ -4,7 +4,7 @@ import scipy.signal as signal
 v=343.3
 class MUSIC:
     
-    def __init__(self,sample_rate=48000,spacing=np.array([0,0.028,0.056,0.084,0.112,0.14,0.168,0.196]),num_channels=8,frame_len=960,stft_len=1024,nsrc=3,acc=5,decay=0.33):
+    def __init__(self,sample_rate=48000,spacing=np.array([0,0.028,0.056,0.084,0.112,0.14,0.168,0.196]),num_channels=8,frame_len=960,stft_len=1024,nsrc=3,acc=10,decay=0.2,saturation=8000):
         self.spacing=spacing
         self.num_channels=num_channels
 
@@ -20,10 +20,12 @@ class MUSIC:
         self.angles = np.arange(-90, 91, 1)
         self.Ng = len(self.angles)
         self.nsrc = nsrc
-        self.sources=np.zeros(nsrc)
+        self.sources=(np.arange(nsrc)*270/self.nsrc) 
+        # print(self.sources)
         self.weights=np.ones(nsrc)
+        self.saturation=saturation
     def doa(self,global_covar):
-        import numpy as np
+        
 
         # Initialize spatial spectrum array
         w = np.zeros(self.Ng)
@@ -47,17 +49,18 @@ class MUSIC:
                 w[g] += power
         # plt.plot(self.angles,w)
         # plt.show()
-        locs, _ = signal.find_peaks(w, height=None, distance=None)
+        locs, _ = signal.find_peaks(w, height=200, distance=None)
         sorted_indices = np.argsort(w[locs])[::-1]
         pks = w[locs][sorted_indices]
         locs = locs[sorted_indices]
         self.source_tracker(locs,pks)
-        print(locs)
-        print(self.sources)
-        print(self.weights)
+        # print(locs)
+        # print(pks)
+        # print(self.sources)
+        # print(self.weights)
         return self.sources[self.nsrc-1]
     def source_tracker(self, locs,pks):
-        if  self.weights[0]==1:
+        if  False and self.weights[0]==1:
             count=0
             
             for i in range(len(locs)):
@@ -77,10 +80,11 @@ class MUSIC:
                     else:
                         self.sources[count]= (self.weights[count]*self.sources[count]+locs[i]*pks[i])/(pks[i]+self.weights[count])
                         self.weights[count]+=pks[i]
+                        self.weights[count]= min(self.weights[count],self.saturation)
         else:
             self.weights*=(1-self.decay)
             for i in range(len(locs)):
-                min_dif=1000
+                min_dif=100000000
                 min_source=0
                 for j in range(self.nsrc):
                     if  np.abs(locs[i]-self.sources[j])<min_dif:
