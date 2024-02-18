@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import scipy.signal as signal
 v=343.3
 class MUSIC:
@@ -25,8 +25,7 @@ class MUSIC:
         self.weights=np.ones(nsrc)
         self.saturation=saturation
     def doa(self,global_covar):
-        
-
+        # print("Here")
         # Initialize spatial spectrum array
         w = np.zeros(self.Ng)
 
@@ -54,10 +53,10 @@ class MUSIC:
         pks = w[locs][sorted_indices]
         locs = locs[sorted_indices]
         self.source_tracker(locs,pks)
-        # print(locs)
-        # print(pks)
-        # print(self.sources)
-        # print(self.weights)
+        print(locs)
+        print(pks)
+        print(self.sources)
+        print(self.weights)
         return self.sources[self.nsrc-1]
     def source_tracker(self, locs,pks):
         if  False and self.weights[0]==1:

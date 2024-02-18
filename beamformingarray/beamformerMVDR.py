@@ -6,7 +6,8 @@ from IOStream import IOStream
 from AudioWriter import AudioWriter
 from VAD import VAD
 from MUSIC import MUSIC
-import multiprocessing
+import threading
+import pickle
 C=343.3
 class Beamformer():
     
@@ -30,6 +31,8 @@ class Beamformer():
         self.theta=-0.1
         self.speech=False
         self.MUSIC=MUSIC()
+        self.c=6
+        self.music_freq=10
         
     def beamform(self,frame):
         if(len(frame)!=self.frame_len):
@@ -54,34 +57,42 @@ class Beamformer():
         self.speech=self.vad.is_speech(win_data)
         # print(speech)
         # self.speech=True
-        if self.speech:
-            # self.theta=self.MUSIC.doa(self.global_covar)
-            covar=self.global_covar.copy()
-            args=[covar]
-            # print((covar.shape))
-            t=multiprocessing.Process(target=self.MUSIC.doa,args=(covar,))
-            t.start()
-            t.join()
-            # X=spectrum.T[0].T
-
-            # Y=spectrum.T[6].T
-            # R = np.multiply(X,np.conj(Y));
         
-            # tphat = np.real(np.fft.ifft(R/np.abs(R),axis=0));
-            # tphat=np.reshape(tphat,(-1))
-            # tphat=np.concatenate([tphat[self.stftd2:self.stft_len],tphat[0:self.stftd2]])
-            # locs, _ = signal.find_peaks(tphat, height=None, distance=None)
-            # sorted_indices = np.argsort(tphat[locs])[::-1]
-            # pks = tphat[locs][sorted_indices]
-            # locs = locs[sorted_indices]
-            # dif=1/self.sample_rate*(locs[0]-self.stftd2)
-            # dif=C*dif/(self.spacing[6]-self.spacing[0])
-            # if dif<-1:
-            #     dif=-1
-            # if dif>1:
-            #     dif=1
-            # ang=np.degrees(np.arccos(dif))%360-90
-            # self.theta=ang
+        if self.speech:
+            if self.c>self.music_freq:
+                covar=self.global_covar.copy()
+                t=threading.Thread(target=self.MUSIC.doa, args=(covar,))
+                t.start()
+                self.c=0
+            self.c+=1
+            self.theta=self.MUSIC.sources[self.MUSIC.nsrc-1]
+            print(self.theta)
+            
+            X=spectrum.T[0].T
+
+            Y=spectrum.T[6].T
+            R = np.multiply(X,np.conj(Y));
+        
+            tphat = np.real(np.fft.ifft(R/np.abs(R),axis=0));
+            tphat=np.reshape(tphat,(-1))
+            tphat=np.concatenate([tphat[self.stftd2:self.stft_len],tphat[0:self.stftd2]])
+            locs, _ = signal.find_peaks(tphat, height=None, distance=None)
+            sorted_indices = np.argsort(tphat[locs])[::-1]
+            pks = tphat[locs][sorted_indices]
+            locs = locs[sorted_indices]
+            dif=1/self.sample_rate*(locs[0]-self.stftd2)
+            # dif=C*dif/(self.spacing[6]-self.spacing[0]) 
+         
+            if dif<-1:
+                dif=-1
+            if dif>1:
+                dif=1
+            ang=np.degrees(np.arccos(dif))%360
+            print("Angle:"+str(ang))
+            print("theta"+str(self.theta))
+            if(np.abs(ang-self.theta)>25):
+                self.theta=ang-90
+                self.c=self.music_freq+1
             # self.theta=22.5
         time = np.asmatrix(self.spacing*np.sin(np.radians(self.theta+90))/C)
         w=np.asmatrix(np.zeros((self.num_channels,self.N_f),dtype='complex128'))
