@@ -48,15 +48,16 @@ class MUSIC:
                 w[g] += power
         # plt.plot(self.angles,w)
         # plt.show()
-        locs, _ = signal.find_peaks(w, height=200, distance=None)
+        locs, _ = signal.find_peaks(w, height=150, distance=None)
         sorted_indices = np.argsort(w[locs])[::-1]
         pks = w[locs][sorted_indices]
         locs = locs[sorted_indices]
         self.source_tracker(locs,pks)
-        print(locs)
-        print(pks)
+        # print(locs)
+        # print(pks)
         print(self.sources)
-        print(self.weights)
+        # print(self.weights)
+
         return self.sources[self.nsrc-1]
     def source_tracker(self, locs,pks):
         if  False and self.weights[0]==1:
@@ -82,16 +83,21 @@ class MUSIC:
                         self.weights[count]= min(self.weights[count],self.saturation)
         else:
             self.weights*=(1-self.decay)
-            for i in range(len(locs)):
-                min_dif=100000000
-                min_source=0
-                for j in range(self.nsrc):
-                    if  np.abs(locs[i]-self.sources[j])<min_dif:
-                        min_dif=np.abs(locs[i]-self.sources[j])
-                        min_source=j
-                self.sources[min_source]= (self.weights[min_source]*self.sources[min_source]+locs[i]*pks[i])/(pks[i]+self.weights[min_source])
+            for i in range(self.nsrc):
+                
+                # min_dif=100000000
+                # min_source=0
+                # for j in range(self.nsrc):
+                #     if  np.abs(locs[i]-self.sources[j])<min_dif:
+                #         min_dif=np.abs(locs[i]-self.sources[j])
+                #         min_source=j
+                # self.sources[min_source]= (self.weights[min_source]*self.sources[min_source]+locs[i]*pks[i])/(pks[i]+self.weights[min_source])
 
-                self.weights[min_source]+=pks[i]
+                # self.weights[min_source]+=pks[i]
+                if i < len(locs):
+                    self.sources[self.nsrc-1-i]= (self.weights[self.nsrc-1-i]*self.sources[self.nsrc-1-i]+locs[i]*pks[i])/(pks[i]+self.weights[self.nsrc-1-i])
+
+                    self.weights[self.nsrc-1-i]+=pks[i]
 
         ind=np.argsort(self.weights)
         self.weights=np.sort(self.weights)

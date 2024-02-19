@@ -33,6 +33,8 @@ class Beamformer():
         self.MUSIC=MUSIC()
         self.c=6
         self.music_freq=10
+        self.fail_count=0
+        # self.
         
     def beamform(self,frame):
         if(len(frame)!=self.frame_len):
@@ -61,12 +63,13 @@ class Beamformer():
         if self.speech:
             if self.c>self.music_freq:
                 covar=self.global_covar.copy()
-                t=threading.Thread(target=self.MUSIC.doa, args=(covar,))
-                t.start()
+                # t=threading.Thread(target=self.MUSIC.doa, args=(covar,))
+                # t.start()
+                self.MUSIC.doa(covar)
                 self.c=0
             self.c+=1
             self.theta=self.MUSIC.sources[self.MUSIC.nsrc-1]
-            print(self.theta)
+            
             
             X=spectrum.T[0].T
 
@@ -75,24 +78,27 @@ class Beamformer():
         
             tphat = np.real(np.fft.ifft(R/np.abs(R),axis=0));
             tphat=np.reshape(tphat,(-1))
-            tphat=np.concatenate([tphat[self.stftd2:self.stft_len],tphat[0:self.stftd2]])
+            tphat=np.concatenate([tphat[int(len(X)/2):len(X)],tphat[0:int(len(X)/2)]])
             locs, _ = signal.find_peaks(tphat, height=None, distance=None)
             sorted_indices = np.argsort(tphat[locs])[::-1]
             pks = tphat[locs][sorted_indices]
             locs = locs[sorted_indices]
-            dif=1/self.sample_rate*(locs[0]-self.stftd2)
-            # dif=C*dif/(self.spacing[6]-self.spacing[0]) 
+            dif=1/self.sample_rate*(locs[0]-len(X)/2)
+            # dif=343.3*dif/6/0.028
+            # print(locs[0]-512)
+            dif=C*dif/(self.spacing[6]-self.spacing[0]) 
          
             if dif<-1:
                 dif=-1
             if dif>1:
                 dif=1
-            ang=np.degrees(np.arccos(dif))%360
+            ang=(np.degrees(np.arccos(dif))+360)%360
             print("Angle:"+str(ang))
-            print("theta"+str(self.theta))
-            if(np.abs(ang-self.theta)>25):
-                self.theta=ang-90
-                self.c=self.music_freq+1
+            # print("theta"+str(self.theta))
+            # if(np.abs(ang-self.theta)>40):
+            #     self.theta=ang-90
+            #     self.c=self.music_freq+1
+            print("Theta"+str(self.theta))
             # self.theta=22.5
         time = np.asmatrix(self.spacing*np.sin(np.radians(self.theta+90))/C)
         w=np.asmatrix(np.zeros((self.num_channels,self.N_f),dtype='complex128'))
@@ -120,12 +126,14 @@ class Beamformer():
         return res
         
 
-io=IOStream()
-aw=AudioWriter()
-file = read("./beamformingarray/AudioTests/test_input_sig.wav")
-beam=Beamformer()
-pcm=np.array(file[1])/32767
-io.arrToStream(pcm,48000)
-while(not io.complete()):
-    aw.add_sample(beam.beamform(io.getNextSample()),480)
-aw.write("./beamformingarray/AudioTests/10.wav",48000)
+# io=IOStream()
+# aw=AudioWriter()
+# file = read("./beamformingarray/AudioTests/test_input_sig.wav")
+# beam=Beamformer()
+# pcm=np.array(file[1])/32767
+# io.arrToStream(pcm,48000)
+# while(not io.complete()):
+#     sample=io.getNextSample()
+#     # print(sample)
+#     aw.add_sample(beam.beamform(sample),480)
+# aw.write("./beamformingarray/AudioTests/10.wav",48000)
