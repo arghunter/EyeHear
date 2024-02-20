@@ -1,10 +1,11 @@
 import numpy as np
 # import matplotlib.pyplot as plt
 import scipy.signal as signal
+from DelayApproximation import DelayAproximator
 v=343.3
 class MUSIC:
     
-    def __init__(self,sample_rate=48000,spacing=np.array([0,0.028,0.056,0.084,0.112,0.14,0.168,0.196]),num_channels=8,frame_len=960,stft_len=1024,nsrc=3,acc=10,decay=0.2,saturation=8000):
+    def __init__(self,sample_rate=48000,spacing=np.array([[0,0],[0.028,0],[0.056,0],[0.084,0],[0.112,0],[0.14,0],[0.168,0],[0.196,0]]),num_channels=8,frame_len=960,stft_len=1024,nsrc=3,acc=10,decay=0.2,saturation=8000):
         self.spacing=spacing
         self.num_channels=num_channels
 
@@ -24,6 +25,7 @@ class MUSIC:
         # print(self.sources)
         self.weights=np.ones(nsrc)
         self.saturation=saturation
+        self.delay_approx=DelayAproximator(self.spacing)
     def doa(self,global_covar):
         # print("Here")
         # Initialize spatial spectrum array
@@ -41,7 +43,7 @@ class MUSIC:
             for g in range(self.Ng):
                
                 c_theta = self.angles[g]
-                c_time = self.spacing * np.sin(np.deg2rad(c_theta)) / v
+                c_time = np.array(self.delay_approx.get_delays(DelayAproximator.get_pos(c_theta+90,2)))
                 c_alpha = np.exp(-1j * 2 * np.pi * f * c_time)
                 np_val = np.abs(c_alpha.conj().T @ En @ En.conj().T @ c_alpha)
                 power = 1 / np_val

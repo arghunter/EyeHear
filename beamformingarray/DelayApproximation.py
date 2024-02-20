@@ -22,7 +22,7 @@ class DelayAproximator:
     def get_pos(angle,dist):
         angle=np.radians(angle)
         pos=[dist*np.cos(angle),dist*np.sin(angle)]
-        print(pos)
+        # print(pos)
         return pos
 
     

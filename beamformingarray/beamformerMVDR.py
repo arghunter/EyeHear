@@ -8,10 +8,11 @@ from VAD import VAD
 from MUSIC import MUSIC
 import threading
 import pickle
+from DelayApproximation import DelayAproximator
 C=343.3
 class Beamformer():
     
-    def __init__(self,sample_rate=48000,spacing=np.array([0,0.028,0.056,0.084,0.112,0.14,0.168,0.196]),num_channels=8,exp_avg=50,frame_len=960,stft_len=1024):
+    def __init__(self,sample_rate=48000,spacing=np.array([[0,0],[0.028,0],[0.056,0],[0.084,0],[0.112,0],[0.14,0],[0.168,0],[0.196,0]]),num_channels=8,exp_avg=50,frame_len=960,stft_len=1024):
         self.spacing=spacing
         self.num_channels=num_channels
         self.exp_avg=exp_avg
@@ -34,6 +35,7 @@ class Beamformer():
         self.c=6
         self.music_freq=10
         self.fail_count=0
+        self.delay_approx=DelayAproximator(self.spacing)
         # self.
         
     def beamform(self,frame):
@@ -73,7 +75,7 @@ class Beamformer():
             
             X=spectrum.T[0].T
 
-            Y=spectrum.T[6].T
+            Y=spectrum.T[self.num_channels-1].T
             R = np.multiply(X,np.conj(Y));
         
             tphat = np.real(np.fft.ifft(R/np.abs(R),axis=0));
@@ -86,8 +88,8 @@ class Beamformer():
             dif=1/self.sample_rate*(locs[0]-len(X)/2)
             # dif=343.3*dif/6/0.028
             # print(locs[0]-512)
-            dif=C*dif/(self.spacing[6]-self.spacing[0]) 
-         
+            dif=C*dif/(np.sqrt((self.spacing[0][0]-self.spacing[self.num_channels-1][0])**2+(self.spacing[0][1]-self.spacing[self.num_channels-1][1])**2)) 
+            print(dif)
             if dif<-1:
                 dif=-1
             if dif>1:
@@ -100,7 +102,9 @@ class Beamformer():
             #     self.c=self.music_freq+1
             print("Theta"+str(self.theta))
             # self.theta=22.5
-        time = np.asmatrix(self.spacing*np.sin(np.radians(self.theta+90))/C)
+            
+     
+        time = np.asmatrix(self.delay_approx.get_delays(DelayAproximator.get_pos(self.theta,2)))
         w=np.asmatrix(np.zeros((self.num_channels,self.N_f),dtype='complex128'))
         for k in range (0,self.N_f-1):
             f=k*self.sample_rate/self.stft_len;

@@ -230,12 +230,13 @@ single_source_unsigned_mean=[]
 single_source_signal_mse=[]
 single_source_org_mse=[]
 single_source_angles=generate_angles(num_single_source_tests)# IMPORTANT!!!!: THIS IS JUST FOR SINGLE LINEAR ARRAY NEED THE TRANFORMATION FOR 2 ARRAY SYSTEM
-single_source_noises=np.random.rand(num_single_source_tests)*2/3
+single_source_angles[0]=24
+single_source_noises=np.random.rand(num_single_source_tests)*2/3 *0
 print(single_source_angles)
 for i in range(num_single_source_tests):
     print(i)
     doa_diff=[]
-    beamformer=Beamformer()
+    beamformer=Beamformer(num_channels=num_microphones)
     if chapter_ind>=len(chapters):
         chapter_ind=0
     if split_iterator>=len(chapter_splits):
