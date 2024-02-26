@@ -64,13 +64,13 @@ class SignalGen:
             self.gains[i]=1/distance**2
 
 
-approx=DelayAproximator([[0,0],[0.028,0],[0.056,0],[0.084,0],[0.112,0],[0.14,0],[0.168,0],[0.196,0]])
-pos=[1.414,1.414]
-delays=approx.get_delays(pos)
-print(delays)
-gen= SignalGen()
-gen.update_delays(45)
-print(gen.delays/10**6)
+# approx=DelayAproximator([[0,0],[0.028,0],[0.056,0],[0.084,0],[0.112,0],[0.14,0],[0.168,0],[0.196,0]])
+# pos=[1.414,1.414]
+# delays=approx.get_delays(pos)
+# print(delays)
+# gen= SignalGen()
+# gen.update_delays(45)
+# print(gen.delays/10**6)
 # gen=SignalGen()
 # writer= AudioWriter()
 # # sine=Chirp(start_freq=50,end_freq=150)

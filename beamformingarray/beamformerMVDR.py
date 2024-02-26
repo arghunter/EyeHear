@@ -31,11 +31,12 @@ class Beamformer():
         self.vad=VAD(48000)
         self.theta=-0.1
         self.speech=False
-        self.MUSIC=MUSIC()
+        self.MUSIC=MUSIC(spacing=spacing,num_channels=num_channels)
         self.c=6
         self.music_freq=10
         self.fail_count=0
         self.delay_approx=DelayAproximator(self.spacing)
+        self.doalock=False
         # self.
         
     def beamform(self,frame):
@@ -62,7 +63,7 @@ class Beamformer():
         # print(speech)
         # self.speech=True
         
-        if self.speech:
+        if self.speech and self.doalock==False:
             if self.c>self.music_freq:
                 covar=self.global_covar.copy()
                 # t=threading.Thread(target=self.MUSIC.doa, args=(covar,))
@@ -89,19 +90,20 @@ class Beamformer():
             # dif=343.3*dif/6/0.028
             # print(locs[0]-512)
             dif=C*dif/(np.sqrt((self.spacing[0][0]-self.spacing[self.num_channels-1][0])**2+(self.spacing[0][1]-self.spacing[self.num_channels-1][1])**2)) 
-            print(dif)
+            # print(dif)
             if dif<-1:
                 dif=-1
             if dif>1:
                 dif=1
             ang=(np.degrees(np.arccos(dif))+360)%360
-            print("Angle:"+str(ang))
+            # print("Angle:"+str(ang))
             # print("theta"+str(self.theta))
-            # if(np.abs(ang-self.theta)>40):
-            #     self.theta=ang-90
-            #     self.c=self.music_freq+1
-            print("Theta"+str(self.theta))
-            # self.theta=22.5
+
+            if(ang!=0 and ang!=180 and (((np.abs(ang-self.theta)>120)and self.theta<180) or((np.abs(360-ang-self.theta)>90)and self.theta>180))):
+                
+                self.c=self.music_freq+1
+            # print("Theta"+str(self.theta))
+            # self.theta=24
             
      
         time = np.asmatrix(self.delay_approx.get_delays(DelayAproximator.get_pos(self.theta,2)))
@@ -123,21 +125,24 @@ class Beamformer():
         
         res_comp=(np.fft.ifft(summed_signal, axis=0))
         res=np.real(res_comp)
-        print(self.frame_count)
+        # print(self.frame_count)
         res=res[0:self.frame_len]
         # print((output[i:i + frame_len, :]).shape)
         self.frame_count+=1
         return res
-        
+    def set_doa(self,doa):
+        self.theta=doa
+        self.doalock=True
+    
 
-# io=IOStream()
-# aw=AudioWriter()
-# file = read("./beamformingarray/AudioTests/test_input_sig.wav")
-# beam=Beamformer()
-# pcm=np.array(file[1])/32767
-# io.arrToStream(pcm,48000)
-# while(not io.complete()):
-#     sample=io.getNextSample()
-#     # print(sample)
-#     aw.add_sample(beam.beamform(sample),480)
-# aw.write("./beamformingarray/AudioTests/10.wav",48000)
+io=IOStream()
+aw=AudioWriter()
+file = read("./beamformingarray/AudioTests/test_input_sig.wav")
+beam=Beamformer(spacing=np.array([[-0.07,0.042],[-0.07,0.014],[-0.07,-0.014],[-0.07,-0.042],[0.07,0.042],[0.07,0.014],[0.07,-0.014],[0.07,-0.042]]))
+pcm=np.array(file[1])/32767
+io.arrToStream(pcm,48000)
+while(not io.complete()):
+    sample=io.getNextSample()
+    # print(sample)
+    aw.add_sample(beam.beamform(sample),480)
+aw.write("./beamformingarray/AudioTests/10.wav",48000)
