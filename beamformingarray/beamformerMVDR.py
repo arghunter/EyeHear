@@ -12,7 +12,7 @@ from DelayApproximation import DelayAproximator
 C=343.3
 class Beamformer():
     
-    def __init__(self,sample_rate=48000,spacing=np.array([[0,0],[0.028,0],[0.056,0],[0.084,0],[0.112,0],[0.14,0],[0.168,0],[0.196,0]]),num_channels=8,exp_avg=50,frame_len=960,stft_len=1024):
+    def __init__(self,sample_rate=48000,spacing=np.array([[0,0],[0.028,0],[0.056,0],[0.084,0],[0.112,0],[0.14,0],[0.168,0],[0.196,0]]),num_channels=8,exp_avg=50,frame_len=960,stft_len=1024 ,srctrck=0):
         self.spacing=spacing
         self.num_channels=num_channels
         self.exp_avg=exp_avg
@@ -31,8 +31,9 @@ class Beamformer():
         self.vad=VAD(48000)
         self.theta=-0.1
         self.speech=False
-        self.MUSIC=MUSIC(spacing=spacing,num_channels=num_channels)
+        self.MUSIC=MUSIC(spacing=spacing,num_channels=num_channels,srctrk=srctrck)
         self.c=6
+        
         self.music_freq=10
         self.fail_count=0
         self.delay_approx=DelayAproximator(self.spacing)
@@ -64,19 +65,19 @@ class Beamformer():
         # self.speech=True
         
         if self.speech and self.doalock==False:
-            if self.c>self.music_freq:
-                covar=self.global_covar.copy()
-                # t=threading.Thread(target=self.MUSIC.doa, args=(covar,))
-                # t.start()
-                self.MUSIC.doa(covar)
-                self.c=0
-            self.c+=1
-            self.theta=self.MUSIC.sources[self.MUSIC.nsrc-1]
+            # if self.c>self.music_freq:
+            #     covar=self.global_covar.copy()
+            #     # t=threading.Thread(target=self.MUSIC.doa, args=(covar,))
+            #     # t.start()
+            #     self.MUSIC.doa(covar)
+            #     self.c=0
+            # self.c+=1
+            # self.theta=self.MUSIC.sources[self.MUSIC.nsrc-1]
             
             
             X=spectrum.T[0].T
 
-            Y=spectrum.T[self.num_channels-1].T
+            Y=spectrum.T[7].T
             R = np.multiply(X,np.conj(Y));
         
             tphat = np.real(np.fft.ifft(R/np.abs(R),axis=0));
@@ -89,7 +90,7 @@ class Beamformer():
             dif=1/self.sample_rate*(locs[0]-len(X)/2)
             # dif=343.3*dif/6/0.028
             # print(locs[0]-512)
-            dif=C*dif/(np.sqrt((self.spacing[0][0]-self.spacing[self.num_channels-1][0])**2+(self.spacing[0][1]-self.spacing[self.num_channels-1][1])**2)) 
+            dif=C*dif/(np.sqrt((self.spacing[0][0]-self.spacing[self.num_channels-1][0])**2+(self.spacing[0][1]-self.spacing[7][1])**2)) 
             # print(dif)
             if dif<-1:
                 dif=-1
@@ -99,11 +100,11 @@ class Beamformer():
             # print("Angle:"+str(ang))
             # print("theta"+str(self.theta))
 
-            if(ang!=0 and ang!=180 and (((np.abs(ang-self.theta)>120)and self.theta<180) or((np.abs(360-ang-self.theta)>90)and self.theta>180))):
+            # if(ang!=0 and ang!=180 and (((np.abs(ang-self.theta)>120)and self.theta<180) or((np.abs(360-ang-self.theta)>90)and self.theta>180))):
                 
-                self.c=self.music_freq+1
-            # print("Theta"+str(self.theta))
-            # self.theta=24
+            #     self.c=self.music_freq+1
+            if(ang!=0 and ang!=180):
+                self.theta=ang
             
      
         time = np.asmatrix(self.delay_approx.get_delays(DelayAproximator.get_pos(self.theta,2)))
@@ -135,14 +136,14 @@ class Beamformer():
         self.doalock=True
     
 
-io=IOStream()
-aw=AudioWriter()
-file = read("./beamformingarray/AudioTests/test_input_sig.wav")
-beam=Beamformer(spacing=np.array([[-0.07,0.042],[-0.07,0.014],[-0.07,-0.014],[-0.07,-0.042],[0.07,0.042],[0.07,0.014],[0.07,-0.014],[0.07,-0.042]]))
-pcm=np.array(file[1])/32767
-io.arrToStream(pcm,48000)
-while(not io.complete()):
-    sample=io.getNextSample()
-    # print(sample)
-    aw.add_sample(beam.beamform(sample),480)
-aw.write("./beamformingarray/AudioTests/10.wav",48000)
+# io=IOStream()
+# aw=AudioWriter()
+# file = read("./beamformingarray/AudioTests/test_input_sig.wav")
+# beam=Beamformer(spacing=np.array([[-0.07,0.042],[-0.07,0.014],[-0.07,-0.014],[-0.07,-0.042],[0.07,0.042],[0.07,0.014],[0.07,-0.014],[0.07,-0.042]]))
+# pcm=np.array(file[1])/32767
+# io.arrToStream(pcm,48000)
+# while(not io.complete()):
+#     sample=io.getNextSample()
+#     # print(sample)
+#     aw.add_sample(beam.beamform(sample),480)
+# aw.write("./beamformingarray/AudioTests/10.wav",48000)

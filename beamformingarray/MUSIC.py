@@ -5,7 +5,7 @@ from DelayApproximation import DelayAproximator
 v=343.3
 class MUSIC:
     
-    def __init__(self,sample_rate=48000,spacing=np.array([[0,0],[0.028,0],[0.056,0],[0.084,0],[0.112,0],[0.14,0],[0.168,0],[0.196,0]]),num_channels=8,frame_len=960,stft_len=1024,nsrc=3,acc=10,decay=0.25,saturation=8000):
+    def __init__(self,sample_rate=48000,spacing=np.array([[0,0],[0.028,0],[0.056,0],[0.084,0],[0.112,0],[0.14,0],[0.168,0],[0.196,0]]),num_channels=8,frame_len=960,stft_len=1024,nsrc=3,acc=10,decay=0.25,saturation=8000, srctrk=0):
         self.spacing=spacing
         self.num_channels=num_channels
 
@@ -17,6 +17,7 @@ class MUSIC:
         self.N_f=int(stft_len/2)+1
         self.acc=acc
         self.decay=decay
+        self.srctrk=srctrk
        
         # self.angles = np.arange(-180, 181, 1)
         self.angles = np.arange(-90, 91, 1)
@@ -87,25 +88,28 @@ class MUSIC:
                         self.weights[count]= min(self.weights[count],self.saturation)
         else:
             self.weights*=(1-self.decay)
-            for i in range(len(locs)):
-                
-                min_dif=100000000
-                min_source=0
-                for j in range(self.nsrc):
-                    if self.sources[j]%1==0:
-                        min_source=j
-                        break
-                        
-                    if  np.abs(locs[i]-self.sources[j])<min_dif :
-                        min_dif=np.abs(locs[i]-self.sources[j])
-                        min_source=j
-                self.sources[min_source]= (self.weights[min_source]*self.sources[min_source]+locs[i]*pks[i])/(pks[i]+self.weights[min_source])
+            if( self.srctrk==1):
+                for i in range(len(locs)):
+                    
+                    min_dif=100000000
+                    min_source=0
+                    for j in range(self.nsrc):
+                        if self.sources[j]%1==0:
+                            min_source=j
+                            break
+                            
+                        if  np.abs(locs[i]-self.sources[j])<min_dif :
+                            min_dif=np.abs(locs[i]-self.sources[j])
+                            min_source=j
+                    self.sources[min_source]= (self.weights[min_source]*self.sources[min_source]+locs[i]*pks[i])/(pks[i]+self.weights[min_source])
 
-                self.weights[min_source]+=pks[i]
-                # if i < len(locs):
-                #     self.sources[self.nsrc-1-i]= (self.weights[self.nsrc-1-i]*self.sources[self.nsrc-1-i]+locs[i]*pks[i])/(pks[i]+self.weights[self.nsrc-1-i])
+                    self.weights[min_source]+=pks[i]
+            else:
+                for i in range(self.nsrc):
+                    if i < len(locs):
+                        self.sources[self.nsrc-1-i]= (self.weights[self.nsrc-1-i]*self.sources[self.nsrc-1-i]+locs[i]*pks[i])/(pks[i]+self.weights[self.nsrc-1-i])
 
-                #     self.weights[self.nsrc-1-i]+=pks[i]
+                        self.weights[self.nsrc-1-i]+=pks[i]
 
         ind=np.argsort(self.weights)
         self.weights=np.sort(self.weights)

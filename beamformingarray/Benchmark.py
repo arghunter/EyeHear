@@ -12,7 +12,7 @@ from Signal import Sine,Sawtooth,Chirp,Square
 import Signal
 import matplotlib.pyplot as plt
 from pystoi import stoi
-
+import whisper
 speech_database_path="C:\\Users\\arg\\Documents\\Datasets\\dev-clean.tar\\dev-clean\\LibriSpeech"
 speech_database_subset="dev-clean"
 speech_database_local=speech_database_path+"\\"+speech_database_subset
@@ -21,7 +21,7 @@ chapters=[]
 target_samplerate=48000
 num_microphones=8
 # np.array([[0,0],[0.028,0]])
-spacings=[np.array([[0,0],[0.028,0],[0.056,0],[0.084,0]]),np.array([[0,0],[0.028,0],[0.056,0],[0.084,0],[0.112,0],[0.14,0],[0.168,0],[0.196,0]]),np.array([[-0.07,0.042],[-0.07,0.014],[-0.07,-0.014],[-0.07,-0.042],[0.07,0.042],[0.07,0.014],[0.07,-0.08],[0.07,-0.042]]),np.array([[-0.07,0.042],[-0.07,0.014],[-0.07,-0.028],[-0.07,-0.042],[0.07,0.042],[0.07,0.014],[0.07,-0.028],[0.07,-0.042]])]
+spacings=[np.array([[0,0],[0.028,0],[0.056,0],[0.084,0]]),np.array([[0,0],[0.028,0],[0.056,0],[0.084,0],[0.112,0],[0.14,0],[0.168,0],[0.196,0]]),np.array([[-0.07,0.042],[-0.07,0.014],[-0.07,-0.014],[-0.07,-0.042],[0.07,0.042],[0.07,0.014],[0.07,-0.014],[0.07,-0.042]]),np.array([[-0.07,0.042],[-0.07,0.014],[-0.07,-0.028],[-0.07,-0.042],[0.07,0.042],[0.07,0.014],[0.07,-0.028],[0.07,-0.042]])]
 def open_chapter(chapter_num):
     print(chapter_num)
     chapter_string=speech_database_local+"\\"+chapters[chapter_num][1]+"\\"+chapters[chapter_num][0]+"\\"
@@ -70,6 +70,34 @@ def generate_angles(num):
         angles.append(int(np.random.rand()*180)) # IMPORTANT!!!!: THIS IS JUST FOR SINGLE LINEAR ARRAY NEED THE TRANFORMATION FOR 2 ARRAY SYSTEM
 
     return angles
+
+def transcribe_from_numpy(audio_array,sr=48000, model_size="base.en"):
+    """Transcribes audio from a NumPy array using OpenAI Whisper.
+
+    Args:
+        audio_array: A 1D NumPy array containing the audio data (mono).
+        model_size:  The Whisper model size to use (e.g., "tiny", "base", "small", etc.).
+                     Defaults to "base".
+
+    Returns:
+        The transcribed text.
+    """
+
+    # Load the Whisper model
+    model = whisper.load_model(model_size)
+
+    # Ensure audio is in the correct format (float32, mono)
+    if audio_array.dtype != np.float32:
+        audio_array = audio_array.astype(np.float32)
+    if len(audio_array.shape) != 1:
+        raise ValueError("Audio array must be one-dimensional (mono)")
+    if sr != 16000:
+        from scipy.signal import resample
+        audio_array = resample(audio_array, int(audio_array.shape[0] * 16000 / sr))
+    # Preprocess and transcribe 
+    result = whisper.transcribe(model, audio_array)
+
+    return result["text"]
 
 ##########################################################################################
 
@@ -217,83 +245,284 @@ def generate_angles(num):
 #Single Source Tests
 read_speakers()
 read_chapters()
-# num_single_source_tests=10
-# single_source_angles=generate_angles(num_single_source_tests)# IMPORTANT!!!!: THIS IS JUST FOR SINGLE LINEAR ARRAY NEED THE TRANFORMATION FOR 2 ARRAY SYSTEM
-# single_source_angles[0]=24
-# single_source_noises=np.random.rand(num_single_source_tests)*2/3 
-# for spacing in spacings:
-#     # spacing=spacings[0]
-#     num_microphones=len(spacing)
-    
-#     ang_iter=0
-#     chapter_ind=0
-#     chapter_splits=open_chapter(chapter_ind)
-#     split_iterator=0
-#     interpolator=Preprocessor(mirrored=False,interpolate=int(np.ceil(target_samplerate/16000)))
-#     sig_gen=SignalGen(num_microphones,spacing,target_samplerate)
-#     single_source_rms=[]
-#     single_source_signed_mean=[]
-#     single_source_unsigned_mean=[]
-#     single_source_signal_mse=[]
-#     single_source_org_mse=[]
+print('=============================Single Source Everything tests===================================')
 
+num_single_source_tests=15
+single_source_angles=generate_angles(num_single_source_tests)# IMPORTANT!!!!: THIS IS JUST FOR SINGLE LINEAR ARRAY NEED THE TRANFORMATION FOR 2 ARRAY SYSTEM
+# single_source_angles[0]=24
+single_source_noises=np.random.rand(num_single_source_tests) 
+# single_source_noises[0]=0.8
+for spacing in spacings:
+    spacing=spacings[1]
+    num_microphones=len(spacing)
     
-#     stoiarr=[]
-#     print(single_source_angles)
-#     for i in range(num_single_source_tests):
-#         # print(i)
-#         doa_diff=[]
-#         beamformer=Beamformer(num_channels=num_microphones,spacing=spacing)
-#         if chapter_ind>=len(chapters):
-#             chapter_ind=0
-#         if split_iterator>=len(chapter_splits):
-#             split_iterator=0
-#             chapter_ind+=1
-#             chapter_splits=open_chapter(chapter_ind)
-#         speech,samplerate=sf.read(chapter_splits[split_iterator][0])
-#         speech=np.reshape(speech,(-1,1))
-#         speech=interpolator.process(speech)
-#         sig_gen.update_delays(single_source_angles[i])
-#         angled_speech=sig_gen.delay_and_gain(speech)
-#         noise_angled_speech=angled_speech+single_source_noises[i]*np.random.randn(*angled_speech.shape)
-#         io=IOStream()
-#         io.arrToStream(noise_angled_speech,target_samplerate)
-#         aw=AudioWriter()
-#         # print(single_source_angles[i])
-#         while(not io.complete()):
-#             frame=io.getNextSample()
-#             # print(frame)
-#             aw.add_sample(beamformer.beamform(frame),480)
-#             if(beamformer.speech and beamformer.theta!=180):
-#                 doa_diff.append(single_source_angles[i]-(beamformer.theta))
-#             # print(doa_diff)
-#         split_iterator+=1
-#         aw.write("./beamformingarray/AudioTests/15.wav",48000)
-#         doa_diff_arr=np.array(doa_diff)
-#         stoiarr.append( stoi(speech, aw.data[0:len(speech)], target_samplerate, extended=False)-stoi(speech, noise_angled_speech.T[0].T[0:len(speech)].reshape(-1,1), target_samplerate, extended=False))
+    ang_iter=0
+    chapter_ind=0
+    chapter_splits=open_chapter(chapter_ind)
+    split_iterator=0
+    interpolator=Preprocessor(mirrored=False,interpolate=int(np.ceil(target_samplerate/16000)))
+    sig_gen=SignalGen(num_microphones,spacing,target_samplerate)
+    single_source_rms=[]
+    single_source_signed_mean=[]
+    single_source_unsigned_mean=[]
+    single_source_signal_mse=[]
+    single_source_org_mse=[]
+    single_source_snr=[]
+    
+    stoiarr=[]
+    print(single_source_angles)
+    for i in range(num_single_source_tests):
+        # print(i)
+        doa_diff=[]
+        beamformer=Beamformer(num_channels=num_microphones,spacing=spacing)
+        if chapter_ind>=len(chapters):
+            chapter_ind=0
+        if split_iterator>=len(chapter_splits):
+            split_iterator=0
+            chapter_ind+=1
+            chapter_splits=open_chapter(chapter_ind)
+        speech,samplerate=sf.read(chapter_splits[split_iterator][0])
+        speech=np.reshape(speech,(-1,1))
+        speech=interpolator.process(speech)
+        power_clean_signal = np.sqrt(np.mean(np.square(speech*32767)))
+        sig_gen.update_delays(single_source_angles[i])
+        angled_speech=sig_gen.delay_and_gain(speech)
+        noise=single_source_noises[i]*np.random.randn(*angled_speech.shape)
+        noise_angled_speech=angled_speech+noise
+        power_noise=np.sqrt(np.mean(np.square((noise.T[0][0:len(speech)]) *32767)))
+        io=IOStream()
+        io.arrToStream(noise_angled_speech,target_samplerate)
+        aw=AudioWriter()
+        # print(single_source_angles[i])
+        while(not io.complete()):
+            frame=io.getNextSample()
+            # print(frame)
+            aw.add_sample(beamformer.beamform(frame),480)
+            if(beamformer.speech and beamformer.theta!=180):
+                doa_diff.append(single_source_angles[i]-(beamformer.theta))
+            # print(doa_diff)
+        split_iterator+=1
+        aw.write("./beamformingarray/AudioTests/15.wav",48000)
+        # print(transcribe_from_numpy(aw.data.reshape((-1))))
+        SNR_db1=20 * np.log10(power_clean_signal / power_noise)
+        power_cleaned = np.sqrt(np.mean(np.square((aw.data[0:len(speech)]-speech) *32767)))
+        SNR_db2 = 20 * np.log10(power_clean_signal / power_cleaned)
+        single_source_snr.append(SNR_db1-SNR_db2)
+        doa_diff_arr=np.array(doa_diff)
+        stoiarr.append( stoi(speech, aw.data[0:len(speech)], target_samplerate, extended=False)-stoi(speech, noise_angled_speech.T[0].T[0:len(speech)].reshape(-1,1), target_samplerate, extended=False))
+        # print(transcribe_from_numpy(aw.data.reshape((-1))))
+        # single_source_org_mse.append(np.square(np.subtract(org_data,op_data)).mean() )
+        # single_source_signal_mse.append(np.square(np.subtract(org_data,noise_data)).mean() )
+        single_source_rms.append(np.sqrt(np.mean(doa_diff_arr**2)))
+        single_source_signed_mean.append(np.mean(doa_diff_arr))
+        single_source_unsigned_mean.append(np.mean(np.abs(doa_diff_arr)))
+    print(spacing)
+    print("Avg unsigned mean doa:" + str(np.mean(single_source_unsigned_mean)))
+    print("Avg signed mean doa:"+str(np.mean(single_source_signed_mean)))
+    print("Avg rms mean:"+str(np.mean(single_source_rms)))
+    print("Avg stoi diff mean:"+str(np.mean(stoiarr)))
+    print(single_source_angles)
+    print(single_source_noises)
+    print(single_source_unsigned_mean)
+    print(stoiarr)
+    print(single_source_snr)
+    
+print('=============================Multi Source Source Tracking Tests===================================')
+num_multi_source_tests=0
+multi_source_angles=generate_angles(num_multi_source_tests+1)# IMPORTANT!!!!: THIS IS JUST FOR SINGLE LINEAR ARRAY NEED THE TRANFORMATION FOR 2 ARRAY SYSTEM
+# multi_source_angles[0]=24
+multi_source_noises=np.random.rand(num_multi_source_tests+1)
+for spacing in spacings:
+    # spacing=spacings[3]
+    num_microphones=len(spacing)
+    
+    ang_iter=0
+    chapter_ind=0
+    chapter_splits=open_chapter(chapter_ind)
+    split_iterator=0
+    interpolator=Preprocessor(mirrored=False,interpolate=int(np.ceil(target_samplerate/16000)))
+    sig_gen=SignalGen(num_microphones,spacing,target_samplerate)
+    multi_source_rms=[]
+    multi_source_signed_mean=[]
+    multi_source_unsigned_mean=[]
+    multi_source_signal_mse=[]
+    multi_source_org_mse=[]
+    multi_source_opp_doa_err=[]
+    # person detection in noise envs
+    stoiarr=[]
+    print(multi_source_angles)
+    for i in range(num_multi_source_tests):
+        # print(i)
+        doa_diff=[]
+        opp_diff=[]
+        beamformer=Beamformer(num_channels=num_microphones,spacing=spacing,srctrck=1)
+        if chapter_ind>=len(chapters):
+            chapter_ind=0
+        if split_iterator>=len(chapter_splits):
+            split_iterator=0
+            chapter_ind+=1
+            chapter_splits=open_chapter(chapter_ind)
+        speech,samplerate=sf.read(chapter_splits[split_iterator][0])
+        if split_iterator>=len(chapter_splits)-1:
+            opp,samplerate=sf.read(chapter_splits[0][0])
+        else:
+            opp,samplerate=sf.read(chapter_splits[split_iterator+1][0])
+        speech=np.reshape(speech,(-1,1))
+        opp=0.75*np.reshape(opp,(-1,1))
+        if len(opp)>len(speech):
+            opp=opp[0:len(speech)]
+        speech=interpolator.process(speech)
+        opp=interpolator.process(opp)
+        sig_gen.update_delays(multi_source_angles[i])
+        angled_speech=sig_gen.delay_and_gain(speech)
+        sig_gen.update_delays(multi_source_angles[i+1])
+        angled_opp=sig_gen.delay_and_gain(opp)
+        angled_speech=Signal.sum_signals(angled_speech,angled_opp)
+        noise_angled_speech=angled_speech+multi_source_noises[i]*np.random.randn(*angled_speech.shape)
+        # print(noise_angled_speech.shape)
+        aw=AudioWriter()
+        aw.add_sample(noise_angled_speech,0)
+        aw.write("./beamformingarray/AudioTests/16.wav",48000)
+        io=IOStream()
+        io.arrToStream(noise_angled_speech,target_samplerate)
+        aw=AudioWriter()
+        # print(multi_source_angles[i])
+        while(not io.complete()):
+            frame=io.getNextSample()
+            # print(frame)
+            aw.add_sample(beamformer.beamform(frame),480)
+            if(beamformer.speech and beamformer.theta!=180):
+                # print(beamformer.MUSIC.sources)
+                doa_diff.append(min(np.abs(multi_source_angles[i]-(beamformer.MUSIC.sources[0])),min((np.abs(multi_source_angles[i]-(beamformer.MUSIC.sources[1]))),(np.abs(multi_source_angles[i]-(beamformer.MUSIC.sources[2]))))))
+                opp_diff.append(min(np.abs(multi_source_angles[i+1]-(beamformer.MUSIC.sources[0])),min((np.abs(multi_source_angles[i+1]-(beamformer.MUSIC.sources[1]))),(np.abs(multi_source_angles[i+1]-(beamformer.MUSIC.sources[2]))))))
+            # print(doa_diff)
+        split_iterator+=1
+        aw.write("./beamformingarray/AudioTests/15.wav",48000)
+        doa_diff_arr=np.array(doa_diff)
+        stoiarr.append( stoi(speech, aw.data[0:len(speech)], target_samplerate, extended=False)-stoi(speech, noise_angled_speech.T[0].T[0:len(speech)].reshape(-1,1), target_samplerate, extended=False))
         
-#         # single_source_org_mse.append(np.square(np.subtract(org_data,op_data)).mean() )
-#         # single_source_signal_mse.append(np.square(np.subtract(org_data,noise_data)).mean() )
-#         single_source_rms.append(np.sqrt(np.mean(doa_diff_arr**2)))
-#         single_source_signed_mean.append(np.mean(doa_diff_arr))
-#         single_source_unsigned_mean.append(np.mean(np.abs(doa_diff_arr)))
-#     print(spacing)
-#     print("Avg unsigned mean doa:" + str(np.mean(single_source_unsigned_mean)))
-#     print("Avg signed mean doa:"+str(np.mean(single_source_signed_mean)))
-#     print("Avg rms mean:"+str(np.mean(single_source_rms)))
-#     print("Avg stoi diff mean:"+str(np.mean(stoiarr)))
-#     print(single_source_angles)
-#     print(single_source_noises)
-#     print(single_source_unsigned_mean)
-#     print(stoiarr)
+        # multi_source_org_mse.append(np.square(np.subtract(org_data,op_data)).mean() )
+        # multi_source_signal_mse.append(np.square(np.subtract(org_data,noise_data)).mean() )
+        multi_source_rms.append(np.sqrt(np.mean(doa_diff_arr**2)))
+        multi_source_signed_mean.append(np.mean(doa_diff_arr))
+        multi_source_unsigned_mean.append(np.mean(np.abs(doa_diff_arr)))
+        multi_source_opp_doa_err.append(np.mean(opp_diff))
+    print(spacing)
+    print("Avg unsigned mean doa:" + str(np.mean(multi_source_unsigned_mean)))
+    print("Avg stoi diff mean:"+str(np.mean(stoiarr)))
+    print(multi_source_angles)
+    print(multi_source_noises)
+    print(multi_source_unsigned_mean)
+    print(stoiarr)
+    print(multi_source_opp_doa_err)
     
     
+
+print('=============================Multi Source Stoi SNR tests===================================')
+num_multi_source_tests=0
+multi_source_angles=generate_angles(num_multi_source_tests+1)# IMPORTANT!!!!: THIS IS JUST FOR SINGLE LINEAR ARRAY NEED THE TRANFORMATION FOR 2 ARRAY SYSTEM
+# multi_source_angles[0]=24
+multi_source_noises=np.random.rand(num_multi_source_tests+1)
+for spacing in spacings:
+    # spacing=spacings[3]
+    num_microphones=len(spacing)
+    
+    ang_iter=0
+    chapter_ind=0
+    chapter_splits=open_chapter(chapter_ind)
+    split_iterator=0
+    interpolator=Preprocessor(mirrored=False,interpolate=int(np.ceil(target_samplerate/16000)))
+    sig_gen=SignalGen(num_microphones,spacing,target_samplerate)
+    multi_source_rms=[]
+    multi_source_signed_mean=[]
+    multi_source_unsigned_mean=[]
+    multi_source_signal_mse=[]
+    multi_source_org_mse=[]
+    multi_source_snr=[]
+    multi_source_stoi_org=[]
+    # person detection in noise envs
+    stoiarr=[]
+    print(multi_source_angles)
+    for i in range(num_multi_source_tests):
+        # print(i)
+        doa_diff=[]
+        beamformer=Beamformer(num_channels=num_microphones,spacing=spacing,srctrck=1)
+        if chapter_ind>=len(chapters):
+            chapter_ind=0
+        if split_iterator>=len(chapter_splits):
+            split_iterator=0
+            chapter_ind+=1
+            chapter_splits=open_chapter(chapter_ind)
+        speech,samplerate=sf.read(chapter_splits[split_iterator][0])
+        if split_iterator>=len(chapter_splits)-1:
+            opp,samplerate=sf.read(chapter_splits[0][0])
+        else:
+            opp,samplerate=sf.read(chapter_splits[split_iterator+1][0])
+        speech=np.reshape(speech,(-1,1))
+        opp=0.75*np.reshape(opp,(-1,1))
+        beamformer.set_doa(multi_source_angles[i])
+        if len(opp)>len(speech):
+            opp=opp[0:len(speech)]
+        speech=interpolator.process(speech)
+        power_clean_signal = np.sqrt(np.mean(np.square(speech*32767)))
+        
+        opp=interpolator.process(opp)
+        sig_gen.update_delays(multi_source_angles[i])
+        angled_speech=sig_gen.delay_and_gain(speech)
+        sig_gen.update_delays(multi_source_angles[i+1])
+        angled_opp=sig_gen.delay_and_gain(opp)
+        angled_speech=Signal.sum_signals(angled_speech,angled_opp)
+        noise=multi_source_noises[i]*np.random.randn(*angled_speech.shape)
+        noise_angled_speech=angled_speech+noise
+        # print(opp.shape)
+        power_noise=np.sqrt(np.mean(np.square((opp.reshape((-1))+noise.T[0][0:min(len(speech),len(opp))]) *32767)))
+        aw=AudioWriter()
+        aw.add_sample(noise_angled_speech,0)
+        aw.write("./beamformingarray/AudioTests/16.wav",48000)
+        io=IOStream()
+        io.arrToStream(noise_angled_speech,target_samplerate)
+        aw=AudioWriter()
+        # print(multi_source_angles[i])
+        while(not io.complete()):
+            frame=io.getNextSample()
+            # print(frame)
+            aw.add_sample(beamformer.beamform(frame),480)
+            if(beamformer.speech and beamformer.theta!=180):
+                # print(beamformer.MUSIC.sources)
+                doa_diff.append(multi_source_angles[i]-(beamformer.theta))
+            # print(doa_diff)
+        split_iterator+=1
+        aw.write("./beamformingarray/AudioTests/15.wav",48000)
+        doa_diff_arr=np.array(doa_diff)
+        multi_source_stoi_org.append(stoi(speech, noise_angled_speech.T[0].T[0:len(speech)].reshape(-1,1), target_samplerate, extended=False))
+        stoiarr.append( stoi(speech, aw.data[0:len(speech)], target_samplerate, extended=False)-stoi(speech, noise_angled_speech.T[0].T[0:len(speech)].reshape(-1,1), target_samplerate, extended=False))
+        SNR_db1=20 * np.log10(power_clean_signal / power_noise)
+        # print(SNR_db)
+        power_cleaned = np.sqrt(np.mean(np.square((aw.data[0:len(speech)]-speech) *32767)))
+        SNR_db2 = 20 * np.log10(power_clean_signal / power_cleaned)
+        # print(SNR_db)
+        multi_source_snr.append(SNR_db1-SNR_db2)
+        # multi_source_org_mse.append(np.square(np.subtract(org_data,op_data)).mean() )
+        # multi_source_signal_mse.append(np.square(np.subtract(org_data,noise_data)).mean() )
+        multi_source_rms.append(np.sqrt(np.mean(doa_diff_arr**2)))
+        multi_source_signed_mean.append(np.mean(doa_diff_arr))
+        multi_source_unsigned_mean.append(np.mean(np.abs(doa_diff_arr)))
+    print(spacing)
+
+    print("Avg stoi diff mean:"+str(np.mean(stoiarr)))
+
+    print(multi_source_noises)
+    print(multi_source_unsigned_mean)
+    print(stoiarr)
+    print(multi_source_snr)
+# print(np.mean(single_source_signal_mse))
+# print(np.mean(single_source_org_mse))
 # num_multi_source_tests=1
 # multi_source_angles=generate_angles(num_multi_source_tests+1)# IMPORTANT!!!!: THIS IS JUST FOR SINGLE LINEAR ARRAY NEED THE TRANFORMATION FOR 2 ARRAY SYSTEM
 # # multi_source_angles[0]=24
-# multi_source_noises=np.random.rand(num_multi_source_tests+1)*2/3 
+# multi_source_noises=np.random.rand(num_multi_source_tests+1)*2/3 *0
 # for spacing in spacings:
-#     # spacing=spacings[3]
+#     spacing=spacings[3]
 #     num_microphones=len(spacing)
     
 #     ang_iter=0
@@ -314,24 +543,10 @@ read_chapters()
 #     for i in range(num_multi_source_tests):
 #         # print(i)
 #         doa_diff=[]
-#         beamformer=Beamformer(num_channels=num_microphones,spacing=spacing)
-#         if chapter_ind>=len(chapters):
-#             chapter_ind=0
-#         if split_iterator>=len(chapter_splits):
-#             split_iterator=0
-#             chapter_ind+=1
-#             chapter_splits=open_chapter(chapter_ind)
-#         speech,samplerate=sf.read(chapter_splits[split_iterator][0])
-#         if split_iterator>=len(chapter_splits)-1:
-#             opp,samplerate=sf.read(chapter_splits[0][0])
-#         else:
-#             opp,samplerate=sf.read(chapter_splits[split_iterator+1][0])
-#         speech=np.reshape(speech,(-1,1))
-#         opp=0.75*np.reshape(opp,(-1,1))
-#         if len(opp)>len(speech):
-#             opp=opp[0:len(speech)]
-#         speech=interpolator.process(speech)
-#         opp=interpolator.process(opp)
+#         beamformer=Beamformer(num_channels=num_microphones,spacing=spacing,srctrck=1)
+#         speech=Sine(500,1).generate_wave(4)
+#         power_clean_signal = np.mean(np.square(speech))
+#         opp=Sine(1234,0.75).generate_wave(4)
 #         sig_gen.update_delays(multi_source_angles[i])
 #         angled_speech=sig_gen.delay_and_gain(speech)
 #         sig_gen.update_delays(multi_source_angles[i+1])
@@ -339,6 +554,8 @@ read_chapters()
 #         angled_speech=Signal.sum_signals(angled_speech,angled_opp)
 #         noise_angled_speech=angled_speech+multi_source_noises[i]*np.random.randn(*angled_speech.shape)
 #         print(noise_angled_speech.shape)
+#         # power_noisy_signal = np.mean(np.square(noise_angled_speech.T[0].T))
+#         # power_noise = np.mean(np.square(noise_angled_speech.T[0].T - speech))
 #         aw=AudioWriter()
 #         aw.add_sample(noise_angled_speech,0)
 #         aw.write("./beamformingarray/AudioTests/16.wav",48000)
@@ -352,115 +569,27 @@ read_chapters()
 #             aw.add_sample(beamformer.beamform(frame),480)
 #             if(beamformer.speech and beamformer.theta!=180):
 #                 # print(beamformer.MUSIC.sources)
-#                 doa_diff.append(min(np.abs(multi_source_angles[i]-(beamformer.MUSIC.sources[0])),min((np.abs(multi_source_angles[i]-(beamformer.MUSIC.sources[1]))),(np.abs(multi_source_angles[i]-(beamformer.MUSIC.sources[2]))))))
+#                 doa_diff.append(multi_source_angles[i]-(beamformer.theta))
 #             # print(doa_diff)
 #         split_iterator+=1
 #         aw.write("./beamformingarray/AudioTests/15.wav",48000)
 #         doa_diff_arr=np.array(doa_diff)
 #         stoiarr.append( stoi(speech, aw.data[0:len(speech)], target_samplerate, extended=False)-stoi(speech, noise_angled_speech.T[0].T[0:len(speech)].reshape(-1,1), target_samplerate, extended=False))
-        
+#         power_noise = np.mean(np.square(aw.data[0:len(speech)] - speech))
+#         SNR_db = 10 * np.log10(power_clean_signal / power_noise)
+#         print(SNR_db)
 #         # multi_source_org_mse.append(np.square(np.subtract(org_data,op_data)).mean() )
 #         # multi_source_signal_mse.append(np.square(np.subtract(org_data,noise_data)).mean() )
 #         multi_source_rms.append(np.sqrt(np.mean(doa_diff_arr**2)))
 #         multi_source_signed_mean.append(np.mean(doa_diff_arr))
 #         multi_source_unsigned_mean.append(np.mean(np.abs(doa_diff_arr)))
 #     print(spacing)
-#     print("Avg unsigned mean doa:" + str(np.mean(multi_source_unsigned_mean)))
+
 #     print("Avg stoi diff mean:"+str(np.mean(stoiarr)))
-#     print(multi_source_angles)
+
 #     print(multi_source_noises)
 #     print(multi_source_unsigned_mean)
 #     print(stoiarr)
-    
-    
-
-num_multi_source_tests=10
-multi_source_angles=generate_angles(num_multi_source_tests+1)# IMPORTANT!!!!: THIS IS JUST FOR SINGLE LINEAR ARRAY NEED THE TRANFORMATION FOR 2 ARRAY SYSTEM
-# multi_source_angles[0]=24
-multi_source_noises=np.random.rand(num_multi_source_tests+1)*2/3 
-for spacing in spacings:
-    # spacing=spacings[3]
-    num_microphones=len(spacing)
-    
-    ang_iter=0
-    chapter_ind=0
-    chapter_splits=open_chapter(chapter_ind)
-    split_iterator=0
-    interpolator=Preprocessor(mirrored=False,interpolate=int(np.ceil(target_samplerate/16000)))
-    sig_gen=SignalGen(num_microphones,spacing,target_samplerate)
-    multi_source_rms=[]
-    multi_source_signed_mean=[]
-    multi_source_unsigned_mean=[]
-    multi_source_signal_mse=[]
-    multi_source_org_mse=[]
-
-    # person detection in noise envs
-    stoiarr=[]
-    print(multi_source_angles)
-    for i in range(num_multi_source_tests):
-        # print(i)
-        doa_diff=[]
-        beamformer=Beamformer(num_channels=num_microphones,spacing=spacing)
-        if chapter_ind>=len(chapters):
-            chapter_ind=0
-        if split_iterator>=len(chapter_splits):
-            split_iterator=0
-            chapter_ind+=1
-            chapter_splits=open_chapter(chapter_ind)
-        speech,samplerate=sf.read(chapter_splits[split_iterator][0])
-        if split_iterator>=len(chapter_splits)-1:
-            opp,samplerate=sf.read(chapter_splits[0][0])
-        else:
-            opp,samplerate=sf.read(chapter_splits[split_iterator+1][0])
-        speech=np.reshape(speech,(-1,1))
-        opp=0.75*np.reshape(opp,(-1,1))
-        beamformer.set_doa(multi_source_angles[i])
-        if len(opp)>len(speech):
-            opp=opp[0:len(speech)]
-        speech=interpolator.process(speech)
-        opp=interpolator.process(opp)
-        sig_gen.update_delays(multi_source_angles[i])
-        angled_speech=sig_gen.delay_and_gain(speech)
-        sig_gen.update_delays(multi_source_angles[i+1])
-        angled_opp=sig_gen.delay_and_gain(opp)
-        angled_speech=Signal.sum_signals(angled_speech,angled_opp)
-        noise_angled_speech=angled_speech+multi_source_noises[i]*np.random.randn(*angled_speech.shape)
-        print(noise_angled_speech.shape)
-        aw=AudioWriter()
-        aw.add_sample(noise_angled_speech,0)
-        aw.write("./beamformingarray/AudioTests/16.wav",48000)
-        io=IOStream()
-        io.arrToStream(noise_angled_speech,target_samplerate)
-        aw=AudioWriter()
-        # print(multi_source_angles[i])
-        while(not io.complete()):
-            frame=io.getNextSample()
-            # print(frame)
-            aw.add_sample(beamformer.beamform(frame),480)
-            if(beamformer.speech and beamformer.theta!=180):
-                # print(beamformer.MUSIC.sources)
-                doa_diff.append(multi_source_angles[i]-(beamformer.theta))
-            # print(doa_diff)
-        split_iterator+=1
-        aw.write("./beamformingarray/AudioTests/15.wav",48000)
-        doa_diff_arr=np.array(doa_diff)
-        stoiarr.append( stoi(speech, aw.data[0:len(speech)], target_samplerate, extended=False)-stoi(speech, noise_angled_speech.T[0].T[0:len(speech)].reshape(-1,1), target_samplerate, extended=False))
-        
-        # multi_source_org_mse.append(np.square(np.subtract(org_data,op_data)).mean() )
-        # multi_source_signal_mse.append(np.square(np.subtract(org_data,noise_data)).mean() )
-        multi_source_rms.append(np.sqrt(np.mean(doa_diff_arr**2)))
-        multi_source_signed_mean.append(np.mean(doa_diff_arr))
-        multi_source_unsigned_mean.append(np.mean(np.abs(doa_diff_arr)))
-    print(spacing)
-    print("Avg unsigned mean doa:" + str(np.mean(multi_source_unsigned_mean)))
-    print("Avg stoi diff mean:"+str(np.mean(stoiarr)))
-    print(multi_source_angles)
-    print(multi_source_noises)
-    print(multi_source_unsigned_mean)
-    print(stoiarr)
-# print(np.mean(single_source_signal_mse))
-# print(np.mean(single_source_org_mse))
-    
     
 
 
