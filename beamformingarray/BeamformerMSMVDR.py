@@ -154,3 +154,14 @@ class Beamformer():
         res=res[0:self.frame_len]
         return res
 
+io=IOStream()
+aw=AudioWriter()
+file = read("./beamformingarray/AudioTests/test_input_sig.wav")
+beam=Beamformer(spacing=np.array([[-0.07,0.042],[-0.07,0.014],[-0.07,-0.014],[-0.07,-0.042],[0.07,0.042],[0.07,0.014],[0.07,-0.014],[0.07,-0.042]]),srctrck=1)
+pcm=np.array(file[1])/32767
+io.arrToStream(pcm,48000)
+while(not io.complete()):
+    sample=io.getNextSample()
+    print(sample.shape)
+    aw.add_sample(beam.beamform(sample),480)
+aw.write("./beamformingarray/AudioTests/10.wav",48000)
