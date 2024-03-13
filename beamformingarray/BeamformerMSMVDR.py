@@ -111,14 +111,14 @@ class Beamformer():
 
         totalRes=np.zeros((self.frame_len,2))
         time = np.asmatrix(self.delay_approx.get_delays(DelayAproximator.get_pos(90,2)))
-        res=0.6*self.sub_mvdr(spectrum,time)
+        res=0.7*self.sub_mvdr(spectrum,time)
         self.signalGen.update_delays(90)
         self.signalGen.delay_and_gain(res)
         
         totalRes+=res
         for sourceNum in range(self.MUSIC.nsrc):
             time = np.asmatrix(self.delay_approx.get_delays(DelayAproximator.get_pos(self.MUSIC.sources[sourceNum],2)))
-            res=0.4*self.MUSIC.weights[sourceNum]/np.sum(self.MUSIC.weights)*self.sub_mvdr(spectrum,time)
+            res=0.3*self.MUSIC.weights[sourceNum]/np.sum(self.MUSIC.weights)*self.sub_mvdr(spectrum,time)
             self.signalGen.update_delays(self.MUSIC.sources[sourceNum])
             self.signalGen.delay_and_gain(res)
             totalRes+=res
