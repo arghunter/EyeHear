@@ -247,7 +247,7 @@ read_speakers()
 read_chapters()
 print('=============================Single Source Everything tests===================================')
 
-num_single_source_tests=15
+num_single_source_tests=0
 single_source_angles=generate_angles(num_single_source_tests)# IMPORTANT!!!!: THIS IS JUST FOR SINGLE LINEAR ARRAY NEED THE TRANFORMATION FOR 2 ARRAY SYSTEM
 # single_source_angles[0]=24
 single_source_noises=np.random.rand(num_single_source_tests) 
@@ -419,12 +419,14 @@ for spacing in spacings:
     
 
 print('=============================Multi Source Stoi SNR tests===================================')
-num_multi_source_tests=0
+num_multi_source_tests=1
 multi_source_angles=generate_angles(num_multi_source_tests+1)# IMPORTANT!!!!: THIS IS JUST FOR SINGLE LINEAR ARRAY NEED THE TRANFORMATION FOR 2 ARRAY SYSTEM
-# multi_source_angles[0]=24
+multi_source_angles[0]=24
+multi_source_angles[1]=120
 multi_source_noises=np.random.rand(num_multi_source_tests+1)
+multi_source_noises[0]=0.1
 for spacing in spacings:
-    # spacing=spacings[3]
+    spacing=spacings[3]
     num_microphones=len(spacing)
     
     ang_iter=0

@@ -12,7 +12,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 import argparse
-
+from DelayApproximation import DelayAproximator
 def dBtoLinear(db):
     """Converts a log value to a linear value."""
     return 10**(db/20);
@@ -52,8 +52,11 @@ def get_phase_law(N, d, wavelength, phi):
     and phi (beam steering angle).
     """
     phase_law = [];
-    for n in range(N):
-        phase_law.append(-2 * math.pi * n * d / wavelength * math.sin(math.radians(phi)));
+    aprox= DelayAproximator(np.array([[-0.07,0.042],[-0.07,0.014],[-0.07,-0.028],[-0.07,-0.042],[0.07,0.042],[0.07,0.014],[0.07,-0.028],[0.07,-0.042]]))
+
+    phase_law=aprox.get_delays(DelayAproximator.get_pos(50,2))
+    # for n in range(N):
+    #     phase_law.append(-2 * math.pi * n * d / wavelength * math.sin(math.radians(phi)));
     return phase_law;   
     
 # Compute antenna pattern
@@ -67,7 +70,7 @@ def get_pattern(N, d, wavelength, phi, amplitude_law, minimum_amplitude, logScal
     amp_law = get_amplitude_law(N, amplitude_law, minimum_amplitude);
     phase_law = get_phase_law(N, d, wavelength, phi);
     
-    theta = np.arange(-90,90,0.1);
+    theta = np.arange(-180,180,0.1);
     mag = [];
     for i in theta:
         im=0; re=0;
@@ -101,26 +104,17 @@ def plot_pattern(theta, mag, amp_law, phase_law, polar=False, output_file=None):
         ax = plt.subplot(131)
         ax.plot(theta,mag)
         ax.grid(True)
-        ax.set_xlim([-90, 90])
+        ax.set_xlim([-180, 180])
         ax.set_xlabel("Theta (Degrees)")
         ax.set_ylabel("Amplitude (Decibels)")
     plt.ylim(top=0)
     plt.title("Antenna pattern");
     
     # Plot amplitude law
-    ax = plt.subplot(132)
-    ax.plot(range(len(amp_law)), amp_law, marker='o');
-    ax.set_ylim([0,1])
-    plt.title("Amplitude law");
-    print("Amplitude law:")
-    print(amp_law)
+
     
     # Plot phase law
-    ax = plt.subplot(133)
-    plt.title("Phase law");
-    ax.plot(range(len(phase_law)),np.rad2deg(phase_law), marker='o')
-    print("Phase law:")
-    print(phase_law)
+
     
     # Show and save plot
     if output_file is not None:
@@ -133,13 +127,13 @@ def main():
     # TODO allow arbitrary amp and phase laws as args
     parser = argparse.ArgumentParser(description="Generates BF pattern.",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-n","--number-elements", type=int, default=4,
+    parser.add_argument("-n","--number-elements", type=int, default=8,
                         help="number of elements")
     parser.add_argument("-c","--wave-celerity", type=float, default=340,
                         help="celerity of the wave in m/s (3.00E8 for light in vaccum, 340 for sound in air)")
-    parser.add_argument("-d","--elements-spacing", type=float, default=0.03,#0.027
+    parser.add_argument("-d","--elements-spacing", type=float, default=0.028,#0.027
                         help="spacing between the elements in m")
-    parser.add_argument("-f","--frequency", type=float, default=750,
+    parser.add_argument("-f","--frequency", type=float, default=2000,
                         help="waveform frequency in Hz")
     parser.add_argument("-a","--steering-angle", type=float, default=0,
                         help="beam steering angle in deg")
