@@ -73,14 +73,12 @@ class Beamformer():
                 # t.start()
                 self.MUSIC.doa(covar)
                 self.c=0
-                print(self.MUSIC.sources)
             self.c+=1
             self.theta=self.MUSIC.sources[self.MUSIC.nsrc-1]
             
             
             X=spectrum.T[0].T
-
-            Y=spectrum.T[self.num_channels-1].T
+            Y=spectrum.T[3].T
             R = np.multiply(X,np.conj(Y));
         
             tphat = np.real(np.fft.ifft(R/np.abs(R),axis=0));
@@ -93,7 +91,7 @@ class Beamformer():
             dif=1/self.sample_rate*(locs[0]-len(X)/2)
             # dif=343.3*dif/6/0.028
             # print(locs[0]-512)
-            dif=C*dif/(np.sqrt((self.spacing[0][0]-self.spacing[self.num_channels-1][0])**2+(self.spacing[0][1]-self.spacing[7][1])**2)) 
+            dif=C*dif/(np.sqrt((self.spacing[0][0]-self.spacing[self.num_channels-1][0])**2+(self.spacing[0][1]-self.spacing[3][1])**2)) 
             # print(dif)
             if dif<-1:
                 dif=-1
@@ -103,22 +101,20 @@ class Beamformer():
             # print("Angle:"+str(ang))
             # print("theta"+str(self.theta))
 
-            # if(ang!=0 and ang!=180 and (((np.abs(ang-self.theta)>120)and self.theta<180) or((np.abs(360-ang-self.theta)>90)and self.theta>180))):
+            if(ang!=0 and ang!=180 and (((np.abs(ang-self.theta)>75)and self.theta<180) or((np.abs(360-ang-self.theta)>75)and self.theta>180))):
                 
-            #     self.c=self.music_freq+1
-            # if(ang!=0 and ang!=180):
-            #     self.theta=ang
+                self.c=self.music_freq+1
 
         totalRes=np.zeros((self.frame_len,2))
         time = np.asmatrix(self.delay_approx.get_delays(DelayAproximator.get_pos(90,2)))
-        res=0.7*self.sub_mvdr(spectrum,time)
+        res=0.2*self.sub_mvdr(spectrum,time)
         self.signalGen.update_delays(90)
         self.signalGen.delay_and_gain(res)
         
         totalRes+=res
         for sourceNum in range(self.MUSIC.nsrc):
             time = np.asmatrix(self.delay_approx.get_delays(DelayAproximator.get_pos(self.MUSIC.sources[sourceNum],2)))
-            res=0.3*self.MUSIC.weights[sourceNum]/np.sum(self.MUSIC.weights)*self.sub_mvdr(spectrum,time)
+            res=0.8*self.MUSIC.weights[sourceNum]/np.sum(self.MUSIC.weights)*self.sub_mvdr(spectrum,time)
             self.signalGen.update_delays(self.MUSIC.sources[sourceNum])
             self.signalGen.delay_and_gain(res)
             totalRes+=res
@@ -154,14 +150,42 @@ class Beamformer():
         res=res[0:self.frame_len]
         return res
 
+from SignalGen import SignalGen
+from Preprocessor import Preprocessor 
+import soundfile as sf
 io=IOStream()
 aw=AudioWriter()
-file = read("./beamformingarray/AudioTests/test_input_sig.wav")
-beam=Beamformer(spacing=np.array([[-0.07,0.042],[-0.07,0.014],[-0.07,-0.014],[-0.07,-0.042],[0.07,0.042],[0.07,0.014],[0.07,-0.014],[0.07,-0.042]]),srctrck=1)
-pcm=np.array(file[1])/32767
-io.arrToStream(pcm,48000)
+spacing=np.array([[-0.08,0.042],[-0.08,0.014],[-0.08,-0.028],[-0.08,-0.042],[0.08,0.042],[0.08,0.014],[0.08,-0.028],[0.08,-0.042]])
+num_microphones=len(spacing)
+target_samplerate=48000
+sig_gen=SignalGen(num_microphones,spacing,target_samplerate)
+speech,samplerate=sf.read(("C:/Users/arg/Documents/Datasets/dev-clean.tar/dev-clean/LibriSpeech/dev-clean/2035/147961/2035-147961-0018.flac"))
+interpolator=Preprocessor(mirrored=False,interpolate=int(np.ceil(target_samplerate/16000)))
+speech=np.reshape(speech,(-1,1))
+speech=interpolator.process(speech)
+sig_gen.update_delays(90)
+angled_speech=sig_gen.delay_and_gain(speech)
+speech1,samplerate=sf.read(("C:/Users/arg/Documents/Datasets/dev-clean.tar/dev-clean/LibriSpeech/dev-clean/652/130737/652-130737-0005.flac"))
+interpolator=Preprocessor(mirrored=False,interpolate=int(np.ceil(target_samplerate/16000)))
+speech1=np.reshape(speech1,(-1,1))
+speech1=interpolator.process(speech1)
+sig_gen.update_delays(30)
+angled_speech=angled_speech[0:min(len(speech),len(speech1))]+sig_gen.delay_and_gain(speech1)[0:min(len(speech),len(speech1))]
+speech2,samplerate=sf.read(("C:/Users/arg/Documents/Datasets/dev-clean.tar/dev-clean/LibriSpeech/dev-clean/6319/64726/6319-64726-0016.flac"))
+interpolator=Preprocessor(mirrored=False,interpolate=int(np.ceil(target_samplerate/16000)))
+speech2=np.reshape(speech2,(-1,1))
+speech2=interpolator.process(speech2)
+sig_gen.update_delays(240)
+angled_speech=angled_speech[0:min(len(speech),min(len(speech1),len(speech2)))]+sig_gen.delay_and_gain(speech2)[0:min(len(speech),min(len(speech1),len(speech2)))]
+angled_speech+=0.05*np.random.randn(*angled_speech.shape)
+aw1=AudioWriter()
+aw1.add_sample(angled_speech,0)
+# aw1.write("./beamformingarray/AudioTests/Demos/2noise.wav",48000)
+beam=Beamformer(spacing=spacing)
+
+io.arrToStream(angled_speech,48000)
 while(not io.complete()):
     sample=io.getNextSample()
-    print(sample.shape)
+    # print(sample)
     aw.add_sample(beam.beamform(sample),480)
-aw.write("./beamformingarray/AudioTests/10.wav",48000)
+aw.write("./beamformingarray/AudioTests/Demos/2cleanaux.wav",48000)

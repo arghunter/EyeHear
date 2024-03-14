@@ -9,6 +9,7 @@ from MUSIC import MUSIC
 import threading
 import pickle
 from DelayApproximation import DelayAproximator
+
 C=343.3
 class Beamformer():
     
@@ -71,8 +72,8 @@ class Beamformer():
                 # t.start()
                 self.MUSIC.doa(covar)
                 self.c=0
-            # self.c+=1
-            # self.theta=self.MUSIC.sources[self.MUSIC.nsrc-1]
+            self.c+=1
+            self.theta=self.MUSIC.sources[self.MUSIC.nsrc-1]
             
             
             X=spectrum.T[0].T
@@ -100,11 +101,11 @@ class Beamformer():
             # print("Angle:"+str(ang))
             # print("theta"+str(self.theta))
 
-            # if(ang!=0 and ang!=180 and (((np.abs(ang-self.theta)>75)and self.theta<180) or((np.abs(360-ang-self.theta)>75)and self.theta>180))):
+            if(ang!=0 and ang!=180 and (((np.abs(ang-self.theta)>75)and self.theta<180) or((np.abs(360-ang-self.theta)>75)and self.theta>180))):
                 
-            #     self.c=self.music_freq+1
-            if(ang!=0 and ang!=180):
-                self.theta=ang
+                self.c=self.music_freq+1
+            # if(ang!=0 and ang!=180):
+            #     self.theta=ang
             
      
         time = np.asmatrix(self.delay_approx.get_delays(DelayAproximator.get_pos(self.theta,2)))
@@ -135,15 +136,3 @@ class Beamformer():
         self.theta=doa
         self.doalock=True
     
-
-io=IOStream()
-aw=AudioWriter()
-file = read("./beamformingarray/AudioTests/test_input_sig.wav")
-beam=Beamformer(spacing=np.array([[-0.07,0.042],[-0.07,0.014],[-0.07,-0.014],[-0.07,-0.042],[0.07,0.042],[0.07,0.014],[0.07,-0.014],[0.07,-0.042]]))
-pcm=np.array(file[1])/32767
-io.arrToStream(pcm,48000)
-while(not io.complete()):
-    sample=io.getNextSample()
-    # print(sample)
-    aw.add_sample(beam.beamform(sample),480)
-aw.write("./beamformingarray/AudioTests/11.wav",48000)
