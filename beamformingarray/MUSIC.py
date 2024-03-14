@@ -19,8 +19,8 @@ class MUSIC:
         self.decay=decay
         self.srctrk=srctrk
        
-        # self.angles = np.arange(-180, 181, 1)
-        self.angles = np.arange(-90, 91, 1)
+        self.angles = np.arange(-180, 181, 1)
+        # self.angles = np.arange(-90, 91, 1)
         self.Ng = len(self.angles)
         self.nsrc = nsrc
         self.sources=(np.arange(nsrc)*270/self.nsrc) 
@@ -45,14 +45,17 @@ class MUSIC:
             for g in range(self.Ng):
                
                 c_theta = self.angles[g]
-                # c_time = np.array(self.delay_approx.get_delays(DelayAproximator.get_pos(c_theta+180,2)))
-                c_time = np.array(self.delay_approx.get_delays(DelayAproximator.get_pos(c_theta+90,2)))
+                c_time = np.array(self.delay_approx.get_delays(DelayAproximator.get_pos(c_theta+180,2)))
+                # c_time = np.array(self.delay_approx.get_delays(DelayAproximator.get_pos(c_theta+90,2)))
                 c_alpha = np.exp(-1j * 2 * np.pi * f * c_time)
                 np_val = np.abs(c_alpha.conj().T @ En @ En.conj().T @ c_alpha)
                 power = 1 / np_val
                 w[g] += power
-        # plt.plot(self.angles,w)
+        # print("here")
+        # plt.polar((self.angles+180)*np.pi/180 ,w)
         # plt.show()
+        
+        
         locs, _ = signal.find_peaks(w, height=200, distance=10)
         sorted_indices = np.argsort(w[locs])[::-1]
         pks = w[locs][sorted_indices]

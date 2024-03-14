@@ -133,13 +133,13 @@ def main():
     # TODO allow arbitrary amp and phase laws as args
     parser = argparse.ArgumentParser(description="Generates BF pattern.",
                                  formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument("-n","--number-elements", type=int, default=4,
+    parser.add_argument("-n","--number-elements", type=int, default=8,
                         help="number of elements")
     parser.add_argument("-c","--wave-celerity", type=float, default=340,
                         help="celerity of the wave in m/s (3.00E8 for light in vaccum, 340 for sound in air)")
     parser.add_argument("-d","--elements-spacing", type=float, default=0.03,#0.027
                         help="spacing between the elements in m")
-    parser.add_argument("-f","--frequency", type=float, default=750,
+    parser.add_argument("-f","--frequency", type=float, default=3000,
                         help="waveform frequency in Hz")
     parser.add_argument("-a","--steering-angle", type=float, default=0,
                         help="beam steering angle in deg")

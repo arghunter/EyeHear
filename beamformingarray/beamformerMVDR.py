@@ -65,19 +65,19 @@ class Beamformer():
         # self.speech=True
         
         if self.speech and self.doalock==False:
-            # if self.c>self.music_freq:
-            #     covar=self.global_covar.copy()
-            #     # t=threading.Thread(target=self.MUSIC.doa, args=(covar,))
-            #     # t.start()
-            #     self.MUSIC.doa(covar)
-            #     self.c=0
+            if self.c>self.music_freq:
+                covar=self.global_covar.copy()
+                # t=threading.Thread(target=self.MUSIC.doa, args=(covar,))
+                # t.start()
+                self.MUSIC.doa(covar)
+                self.c=0
             # self.c+=1
             # self.theta=self.MUSIC.sources[self.MUSIC.nsrc-1]
             
             
             X=spectrum.T[0].T
 
-            Y=spectrum.T[7].T
+            Y=spectrum.T[3].T
             R = np.multiply(X,np.conj(Y));
         
             tphat = np.real(np.fft.ifft(R/np.abs(R),axis=0));
@@ -90,7 +90,7 @@ class Beamformer():
             dif=1/self.sample_rate*(locs[0]-len(X)/2)
             # dif=343.3*dif/6/0.028
             # print(locs[0]-512)
-            dif=C*dif/(np.sqrt((self.spacing[0][0]-self.spacing[self.num_channels-1][0])**2+(self.spacing[0][1]-self.spacing[7][1])**2)) 
+            dif=C*dif/(np.sqrt((self.spacing[0][0]-self.spacing[self.num_channels-1][0])**2+(self.spacing[0][1]-self.spacing[3][1])**2)) 
             # print(dif)
             if dif<-1:
                 dif=-1
@@ -100,7 +100,7 @@ class Beamformer():
             # print("Angle:"+str(ang))
             # print("theta"+str(self.theta))
 
-            # if(ang!=0 and ang!=180 and (((np.abs(ang-self.theta)>120)and self.theta<180) or((np.abs(360-ang-self.theta)>90)and self.theta>180))):
+            # if(ang!=0 and ang!=180 and (((np.abs(ang-self.theta)>75)and self.theta<180) or((np.abs(360-ang-self.theta)>75)and self.theta>180))):
                 
             #     self.c=self.music_freq+1
             if(ang!=0 and ang!=180):
