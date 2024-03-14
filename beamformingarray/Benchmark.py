@@ -1,6 +1,6 @@
 import numpy as np
 from IOStream import IOStream
-from BeamformerMVDR import Beamformer
+from beamformerMVDR import Beamformer
 from AudioWriter import AudioWriter
 from Preprocessor import Preprocessor
 from time import time
@@ -71,33 +71,7 @@ def generate_angles(num):
 
     return angles
 
-def transcribe_from_numpy(audio_array,sr=48000, model_size="base.en"):
-    """Transcribes audio from a NumPy array using OpenAI Whisper.
 
-    Args:
-        audio_array: A 1D NumPy array containing the audio data (mono).
-        model_size:  The Whisper model size to use (e.g., "tiny", "base", "small", etc.).
-                     Defaults to "base".
-
-    Returns:
-        The transcribed text.
-    """
-
-    # Load the Whisper model
-    model = whisper.load_model(model_size)
-
-    # Ensure audio is in the correct format (float32, mono)
-    if audio_array.dtype != np.float32:
-        audio_array = audio_array.astype(np.float32)
-    if len(audio_array.shape) != 1:
-        raise ValueError("Audio array must be one-dimensional (mono)")
-    if sr != 16000:
-        from scipy.signal import resample
-        audio_array = resample(audio_array, int(audio_array.shape[0] * 16000 / sr))
-    # Preprocess and transcribe 
-    result = whisper.transcribe(model, audio_array)
-
-    return result["text"]
 
 ##########################################################################################
 
