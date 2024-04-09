@@ -19,12 +19,12 @@ from IOStream import IOStream
 
 ############### Constants ###############
 #SAMPLES_PER_FRAME = 10 #Number of mic reads concatenated within a single window
-SAMPLES_PER_FRAME = 100
+SAMPLES_PER_FRAME = 60
 nfft = 1024#256#1024 #NFFT value for spectrogram
 overlap = 512#512 #overlap value for spectrogram
 rate = 16000 #sampling rate
 sd.default.device=18
-stream = IOStream(20000,20000)
+stream = IOStream(20000,10000)
 stream.streamAudio(rate,8)
 im=0
 # for i in range(10):
@@ -80,7 +80,7 @@ def update_fig(n):
 ############### Initialize Plot ###############
 print("Here")
 fig = plt.figure()
-# print("Here")
+print("Here")
 
 # """
 # Launch the stream and the original spectrogram
@@ -90,12 +90,15 @@ fig = plt.figure()
 
 data = get_sample()
 arr2D,freqs,bins = get_specgram(data,rate)
+print("Heree")
 """
 Setup the plot paramters
 """
 extent = (bins[0],bins[-1]*SAMPLES_PER_FRAME,freqs[-1],freqs[0])
 im = plt.imshow(arr2D,aspect='auto',extent = extent,interpolation="none",
                 cmap = 'jet',norm = LogNorm(vmin=.01,vmax=1))
+print("Hereee")
+
 plt.xlabel('Time (s)')
 plt.ylabel('Frequency (Hz)')
 plt.title('Real Time Spectogram')
@@ -104,9 +107,10 @@ plt.gca().invert_yaxis()
 
 ############### Animate ###############
 anim = animation.FuncAnimation(fig,update_fig,blit = False,
-                            interval=50)
+                            interval=20)
 
-                            
+print("Hereee")
+                          
 try:
     plt.show()
 except:
@@ -118,8 +122,7 @@ except:
 # anim = animation.FuncAnimation(fig,update_fig,blit = False,
 #                             interval=20)
 
-plt.show();
-print("ere")             
+          
 # try:
 #     plt.show()
 # except:
