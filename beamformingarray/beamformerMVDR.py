@@ -29,7 +29,7 @@ class Beamformer():
         self.N_f=int(stft_len/2)+1
         self.mu=0
         self.global_covar=np.zeros((num_channels,num_channels,self.N_f),dtype='complex128')
-        self.vad=VAD(48000)
+        self.vad=VAD(16000)
         self.theta=-0.1
         self.speech=False
         self.MUSIC=MUSIC(spacing=spacing,num_channels=num_channels,srctrk=srctrck)
@@ -107,8 +107,10 @@ class Beamformer():
             # if(ang!=0 and ang!=180):
             #     self.theta=ang
             
-     
-        time = np.asmatrix(self.delay_approx.get_delays(DelayAproximator.get_pos(self.theta,2)))
+        if self.doalock:
+            time=self.time
+        else:
+            time= np.asmatrix(self.delay_approx.get_delays(DelayAproximator.get_pos(self.theta,0.5)))
         w=np.asmatrix(np.zeros((self.num_channels,self.N_f),dtype='complex128'))
         for k in range (0,self.N_f-1):
             f=k*self.sample_rate/self.stft_len;
@@ -135,4 +137,5 @@ class Beamformer():
     def set_doa(self,doa):
         self.theta=doa
         self.doalock=True
+        self.time = np.asmatrix(self.delay_approx.get_delays(DelayAproximator.get_pos(self.theta,0.5)))
     

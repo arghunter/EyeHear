@@ -40,7 +40,7 @@ class IOStream: #sample duration in microseconds
     def audio_callback(self,indata, frames, time, status):
         # print(("1"))
         for i in range(frames):
-            print('')
+            # print('')
             if(self.buffer_head<self.buffer2.shape[0]):
                 self.buffer2[self.buffer_head]=indata[i]
                 self.buffer_head+=1
