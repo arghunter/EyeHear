@@ -12,7 +12,6 @@ from Signal import Sine,Sawtooth,Chirp,Square
 import Signal
 import matplotlib.pyplot as plt
 from pystoi import stoi
-import whisper
 speech_database_path="C:\\Users\\arg\\Documents\\Datasets\\dev-clean.tar\\dev-clean\\LibriSpeech"
 speech_database_subset="dev-clean"
 speech_database_local=speech_database_path+"\\"+speech_database_subset

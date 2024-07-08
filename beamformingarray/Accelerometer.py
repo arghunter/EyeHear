@@ -83,7 +83,7 @@ class BNO08x_RVC:
         start_time = time()
         while time() - start_time < self._timeout:
             data = self._serial.read(2)
-            
+            # print(data)
             if data is None:
                 continue
             if data[0] == 0xAA and data[1] == 0xAA:
@@ -100,9 +100,9 @@ class BNO08x_RVC:
         
 # Example usage
 # bno = BNO08x_RVC(serial_port='/dev/ttyUSB0', baudrate=9600)
-# print(bno.heading)
+# # print(bno.heading)
 # accel=BNO08x_RVC('COM4')
-# accel.zero()
+# # accel.zero()
 # while True:
 #     print(accel.get_yaw())
 
