@@ -13,7 +13,7 @@ noise = np.random.normal(0,1,samplesdelayed.shape)*0.2
 samplesdelayed+=noise
 # print(samplesdelayed.dtype)
 write("ExtraMics16/AudioTests/d1b.wav", 48000,samplesdelayed.T)
-samplesmerged=np.zeros((10,48000*5))
+samplesmerged=np.zeros((16,48000*5))
 for i in range(16):
     
     samplesmerged[0]+=np.roll(samplesdelayed[i],-int(sampledelay[i][0]))# front
@@ -22,11 +22,18 @@ for i in range(16):
     samplesmerged[3]+=np.roll(samplesdelayed[i],int(sampledelay[i][1]))#Right(maybe)
 samplesmerged/=4 
 samplesmerged[4]+=np.roll(samplesdelayed[1],int(-5))+ samplesdelayed[6]+   np.roll(samplesdelayed[3],int(-15)) +samplesdelayed[7]
-samplesmerged[5]+=np.roll(samplesdelayed[11],int(-5))+ samplesdelayed[9]+   np.roll(samplesdelayed[13],int(-15)) +samplesdelayed[8]
-samplesmerged[6]+=np.roll(samplesdelayed[5],int(-30))+ samplesdelayed[10]+   np.roll(samplesdelayed[4],int(-25)) +samplesdelayed[9]
-samplesmerged[7]+=np.roll(samplesdelayed[15],int(-30))+ samplesdelayed[0]+   np.roll(samplesdelayed[14],int(-25)) +samplesdelayed[6]
-samplesmerged[8]+=np.roll(samplesdelayed[2],int(-26))+ samplesdelayed[10]+   np.roll(samplesdelayed[4],int(-26)) +samplesdelayed[11]
-samplesmerged[9]+=np.roll(samplesdelayed[14],int(-26))+ samplesdelayed[2]+   np.roll(samplesdelayed[12],int(-26)) +samplesdelayed[0]
+samplesmerged[5]+=np.roll(samplesdelayed[1],int(5))+ samplesdelayed[6]+   np.roll(samplesdelayed[3],int(15)) +samplesdelayed[7]
+samplesmerged[6]+=np.roll(samplesdelayed[11],int(-5))+ samplesdelayed[9]+   np.roll(samplesdelayed[13],int(-15)) +samplesdelayed[8]
+samplesmerged[7]+=np.roll(samplesdelayed[11],int(5))+ samplesdelayed[9]+   np.roll(samplesdelayed[13],int(15)) +samplesdelayed[8]
+samplesmerged[8]+=np.roll(samplesdelayed[5],int(-30))+ samplesdelayed[10]+   np.roll(samplesdelayed[4],int(-25)) +samplesdelayed[9]
+samplesmerged[9]+=np.roll(samplesdelayed[5],int(30))+ samplesdelayed[10]+   np.roll(samplesdelayed[4],int(25)) +samplesdelayed[9]
+samplesmerged[10]+=np.roll(samplesdelayed[15],int(-30))+ samplesdelayed[0]+   np.roll(samplesdelayed[14],int(-25)) +samplesdelayed[6]
+samplesmerged[11]+=np.roll(samplesdelayed[15],int(30))+ samplesdelayed[0]+   np.roll(samplesdelayed[14],int(25)) +samplesdelayed[6]
+samplesmerged[12]+=np.roll(samplesdelayed[2],int(-26))+ samplesdelayed[10]+   np.roll(samplesdelayed[4],int(-26)) +samplesdelayed[11]
+samplesmerged[13]+=np.roll(samplesdelayed[2],int(26))+ samplesdelayed[10]+   np.roll(samplesdelayed[4],int(26)) +samplesdelayed[11]
+samplesmerged[14]+=np.roll(samplesdelayed[14],int(-26))+ samplesdelayed[2]+   np.roll(samplesdelayed[12],int(-26)) +samplesdelayed[0]
+samplesmerged[15]+=np.roll(samplesdelayed[14],int(26))+ samplesdelayed[2]+   np.roll(samplesdelayed[12],int(26)) +samplesdelayed[0]
+
 # Now the speical ones  
 # 53 degres: 1 6 3 7  dist 15 5
 # other 53 : 9 11 8 13 dist 15 5
