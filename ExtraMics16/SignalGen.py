@@ -3,7 +3,7 @@ from Signal import Sine,Sawtooth,Square,Signal,Chirp
 import Signal
 
 from scipy import signal
-v=343.3
+v=336
 from DelayApproximation import DelayAproximator
 
 
@@ -47,7 +47,7 @@ class SignalGen:
     #calculates number of samples to delay
     def calculate_channel_shift(self):
         channel_shifts=((self.delays/self.sample_dur))
-        # print((self.delays/self.sample_dur))
+        print((self.delays/self.sample_dur)/7*1000)
         
         return channel_shifts
     def update_delays(self,doa): #doa in degrees, assuming plane wave as it is a far-field source

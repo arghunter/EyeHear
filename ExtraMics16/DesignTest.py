@@ -4,23 +4,30 @@ from scipy.io.wavfile import write
 from SignalGen import SignalGen
 
 sampledelay=np.array([[0,0],[0,4],[0,10],[0,12],[0,14],[0,18],[3,0],[9,0],[15,0],[21,0],[24,0],[24,4],[24,10],[24,12],[24,14],[24,18]]) 
-sig=Square(1,0.5,48000)
-wave = sig.generate_wave(5)
+sig=Sine(4000,0.5,48000)
+wave = sig.generate_wave(0.5)
+write("ExtraMics16/AudioTests/d1b1.wav", 48000,wave)
+sig2=Sine(3000,0.5)
+wave2=sig2.generate_wave(0.5)
+wave2=np.roll(wave2,24000)
+write("ExtraMics16/AudioTests/d1b2.wav", 48000,wave2)
 gen=SignalGen(16,sampledelay*7/1000)
 print(gen.spacing)
-gen.update_delays(53)
+gen.update_delays(0)
 samplesdelayed=gen.delay_and_gain(wave)
+gen.update_delays(90)
+samplesdelayed+=gen.delay_and_gain(wave2)
 # samplesdelayed=np.zeros((16,48000*5))
 # for i in range(16):
     
 #     samplesdelayed[i]=np.roll(wave,int(sampledelay[i][0]))
-noise = np.random.normal(0,1,samplesdelayed.shape)*0.2
+noise = np.random.normal(0,1,samplesdelayed.shape)*0.1
 # samplesdelayed+=noise
 samplesdelayed=samplesdelayed.T
 
 # print(samplesdelayed.dtype)
 write("ExtraMics16/AudioTests/d1b.wav", 48000,samplesdelayed.T)
-samplesmerged=np.zeros((16,48000*5))
+samplesmerged=np.zeros((16,int(48000*0.5)))
 for i in range(16):
     
     samplesmerged[0]+=np.roll(samplesdelayed[i],-int(sampledelay[i][0]))# front
@@ -52,6 +59,22 @@ samplesmerged/=4
 
 write("ExtraMics16/AudioTests/d1p.wav", 48000,samplesmerged.T)
 
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy.fftpack
+
+# Number of samplepoints
+N =int( 48000*0.5)
+# sample spacing
+T = 1.0 / 48000.0
+x = np.linspace(0.0, N*T, N)
+y = samplesmerged[3]
+yf = scipy.fftpack.fft(y)
+xf = np.linspace(0.0, 1.0/(2.0*T), N//2)
+
+fig, ax = plt.subplots()
+ax.plot(xf[0:4000], (2.0/N * np.abs(yf[:N//2]))[0:4000])
+plt.show()
 # Next steps
-# Next goal: push in audio from any direction 
+# Next goal: multiple audio sources and light testing
 # 
