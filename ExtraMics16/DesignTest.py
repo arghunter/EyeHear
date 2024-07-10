@@ -4,18 +4,18 @@ from scipy.io.wavfile import write
 from SignalGen import SignalGen
 
 sampledelay=np.array([[0,0],[0,4],[0,10],[0,12],[0,14],[0,18],[3,0],[9,0],[15,0],[21,0],[24,0],[24,4],[24,10],[24,12],[24,14],[24,18]]) 
-sig=Sine(4000,0.5,48000)
+sig=Sine(1500,0.5,48000)
 wave = sig.generate_wave(0.5)
 write("ExtraMics16/AudioTests/d1b1.wav", 48000,wave)
-sig2=Sine(3000,0.5)
+sig2=Sine(1000,0.5) #Aliasing threshold is ~1600 on the longest diagonal and the worst case scenario - bunch of testing and math
 wave2=sig2.generate_wave(0.5)
 wave2=np.roll(wave2,24000)
 write("ExtraMics16/AudioTests/d1b2.wav", 48000,wave2)
-gen=SignalGen(16,sampledelay*7/1000)
+gen=SignalGen(16,sampledelay*343/48000/1000)
 print(gen.spacing)
-gen.update_delays(0)
+gen.update_delays(67)
 samplesdelayed=gen.delay_and_gain(wave)
-gen.update_delays(90)
+gen.update_delays(0)
 samplesdelayed+=gen.delay_and_gain(wave2)
 # samplesdelayed=np.zeros((16,48000*5))
 # for i in range(16):
@@ -68,7 +68,7 @@ N =int( 48000*0.5)
 # sample spacing
 T = 1.0 / 48000.0
 x = np.linspace(0.0, N*T, N)
-y = samplesmerged[3]
+y = samplesmerged[15]
 yf = scipy.fftpack.fft(y)
 xf = np.linspace(0.0, 1.0/(2.0*T), N//2)
 

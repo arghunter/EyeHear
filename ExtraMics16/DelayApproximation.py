@@ -1,6 +1,6 @@
 # Make something where oyu pass in source coords and the coord of the mics and then i calculates the time diff from each mic from the first mic
 import numpy as np
-v=343.3
+v=343
 class DelayAproximator:
 
     def __init__(self,coords) :
@@ -21,7 +21,7 @@ class DelayAproximator:
         return tdoa_values
     def get_pos(angle,dist):
         angle=np.radians(angle)
-        pos=[dist*np.cos(angle),dist*np.sin(angle)]
+        pos=[dist*np.cos(np.pi/2-angle),dist*np.sin(np.pi/2-angle)]
         # print(pos)
         return pos
 
