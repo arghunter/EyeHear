@@ -8,7 +8,7 @@ sampledelay=np.array([[0,0],[0,4],[0,10],[0,12],[0,14],[0,18],[3,0],[9,0],[15,0]
 sig=Sine(1500,0.5,48000)
 pe=Preprocessor(interpolate=3)
 target_samplerate=48000
-sig_gen=SignalGen(16,sampledelay*343/48000/1000)
+sig_gen=SignalGen(16,sampledelay*343/48000)
 speech,samplerate=sf.read(("C:/Users/arg/Documents/Datasets/dev-clean.tar/dev-clean/LibriSpeech/dev-clean/2035/147961/2035-147961-0018.flac"))
 interpolator=Preprocessor(mirrored=False,interpolate=int(np.ceil(target_samplerate/16000)))
 speech=np.reshape(speech,(-1,1))
@@ -75,28 +75,28 @@ import matplotlib.pyplot as plt
 import scipy.fftpack
 
 # Number of samplepoints
-N =int(198480)
-# sample spacing
-T = 1.0 / 48000.0
-x = np.linspace(0.0, N*T, N)
-y = samplesmerged[3]
-yf = scipy.fftpack.fft(y)
-xf = np.linspace(0.0, 1.0/(2.0*T), N//2)
+# N =int(198480)
+# # sample spacing
+# T = 1.0 / 48000.0
+# x = np.linspace(0.0, N*T, N)
+# y = samplesmerged[3]
+# yf = scipy.fftpack.fft(y)
+# xf = np.linspace(0.0, 1.0/(2.0*T), N//2)
 
-fig, ax = plt.subplots()
-ax.plot(xf[0:4000], (2.0/N * np.abs(yf[:N//2]))[0:4000])
-plt.show()
-N =int( 198480)
-# sample spacing
-T = 1.0 / 48000.0
-x = np.linspace(0.0, N*T, N)
-y = samplesmerged[ 1]
-yf = scipy.fftpack.fft(y)
-xf = np.linspace(0.0, 1.0/(2.0*T), N//2)
+# fig, ax = plt.subplots()
+# ax.plot(xf[0:4000], (2.0/N * np.abs(yf[:N//2]))[0:4000])
+# plt.show()
+# N =int( 198480)
+# # sample spacing
+# T = 1.0 / 48000.0
+# x = np.linspace(0.0, N*T, N)
+# y = samplesmerged[ 1]
+# yf = scipy.fftpack.fft(y)
+# xf = np.linspace(0.0, 1.0/(2.0*T), N//2)
 
-fig, ax = plt.subplots()
-ax.plot(xf[0:4000], (2.0/N * np.abs(yf[:N//2]))[0:4000])
-plt.show()
+# fig, ax = plt.subplots()
+# ax.plot(xf[0:4000], (2.0/N * np.abs(yf[:N//2]))[0:4000])
+# plt.show()
 # Next steps
-# Next goal: voice integration
+# Next goal: Waht i need is some way to take in the 16 directions and split them voices in real time
 # 
