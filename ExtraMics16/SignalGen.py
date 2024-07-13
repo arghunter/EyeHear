@@ -25,8 +25,10 @@ class SignalGen:
         print(spacing)
 
     def delay_and_gain(self, samples):
-        
+        #ok i really need to make this use fft so i can change the complexity form n^2 to nlogn or something
         shifts=self.calculate_channel_shift()
+        f=k*self.sample_rate/self.stft_len;
+            alpha=np.exp(-1j*2*np.pi*f*time).T
         # print("Delays")
         # print(shifts)
         intshifts=np.floor(shifts)
