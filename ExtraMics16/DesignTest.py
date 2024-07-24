@@ -71,19 +71,20 @@ samplesmerged/=4
 write("ExtraMics16/AudioTests/d1p.wav", 48000,samplesmerged.T)
 samplesmerged/=16
 from sklearn.decomposition import FastICA
-ica = FastICA(n_components=5, random_state=0)
-separated_sources = ica.fit_transform(samplesmerged.T).T
-# separated_sources/=max(separated_sources)
-for i, source in enumerate(separated_sources):
-    separated_sources[i]/=max(separated_sources[i])
-    sf.write(f'ExtraMics16/AudioTests/separated_source_{i+1}.wav', source, 48000)  # Assuming a sampling rate of 44100 Hz
-for i, source in enumerate(separated_sources):
-    plt.figure()
-    plt.plot(source)
-    plt.title(f'Separated Source {i+1}')
-    plt.xlabel('Time')
-    plt.ylabel('Amplitude')
-    plt.show()
+for j in range(15):
+    ica = FastICA(n_components=1, random_state=0)
+    separated_sources = ica.fit_transform(samplesmerged[i:i+2].T).T
+    # separated_sources/=max(separated_sources)
+    for i, source in enumerate(separated_sources):
+        separated_sources[i]/=max(separated_sources[i])
+        sf.write(f'ExtraMics16/AudioTests/separated_source_{i+1}_{j+1}.wav', source, 48000)  # Assuming a sampling rate of 44100 Hz
+# for i, source in enumerate(separated_sources):
+#     plt.figure()
+#     plt.plot(source)
+#     plt.title(f'Separated Source {i+1}')
+#     plt.xlabel('Time')
+#     plt.ylabel('Amplitude')
+#     plt.show()
     
 # import numpy as np
 # import matplotlib.pyplot as plt
