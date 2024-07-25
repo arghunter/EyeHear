@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.io.wavfile import write,read
 import soundfile as sf
-filename="C:\\Users\\arg\\Documents\\MATLAB\\pdm_sine_wave_1.txt"
+filename="C:\\Users\\arg\\Documents\\MATLAB\\pdm_sine_wave_2.txt"
 
 def binary_to_decimal(binary_str):
     """
@@ -14,7 +14,7 @@ def binary_to_decimal(binary_str):
     else:
         return int(binary_str, 2)
 
-def decimal_to_binary(decimal, bits=32):
+def decimal_to_binary(decimal, bits=19):
     """
     Convert a decimal integer to a two's complement binary string of 32 bits.
     """
@@ -23,7 +23,7 @@ def decimal_to_binary(decimal, bits=32):
     binary_str = bin(decimal)[2:]  # convert to binary and remove '0b' prefix
     return binary_str.zfill(bits)
 
-def twos_complement_addition(bin1, bin2, bits=32):
+def twos_complement_addition(bin1, bin2, bits=19):
     """
     Perform two's complement binary addition with 32-bit padding.
     """
@@ -44,14 +44,14 @@ def twos_complement_addition(bin1, bin2, bits=32):
         result_decimal += 2 * max_value
 
     return decimal_to_binary(result_decimal, bits)
-def binary_not(binary_str, bits=32):
+def binary_not(binary_str, bits=19):
     """
     Perform bitwise NOT operation on a binary string with 32-bit padding.
     """
     binary_str = binary_str.zfill(bits)
     return ''.join('1' if b == '0' else '0' for b in binary_str)
 
-def twos_complement_subtraction(bin1, bin2, bits=32):
+def twos_complement_subtraction(bin1, bin2, bits=19):
     """
     Perform two's complement binary subtraction with 32-bit padding.
     """
@@ -101,6 +101,7 @@ with open(filename, 'r') as file:
         counter+=1;
         line=file.readline()
 nparr=np.array(out_array, dtype=float)
+print(max(nparr))
 nparr/=max(nparr)
 print(len(nparr))
 # write("ExtraMics16/AudioTests/cictest.wav", 48000,np.array(out_array))
