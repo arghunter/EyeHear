@@ -22,7 +22,7 @@ class SignalGen:
         self.gains = np.ones(n_channels) # multiplier
         self.sample_dur= 1/sample_rate *10**6 #Duration of a sample in microseconds
         self.delay_approx=DelayAproximator(self.spacing)
-        print(spacing)
+        # print(spacing)
 
     def delay_and_gain(self, samples):
         #ok i really need to make this use fft so i can change the complexity form n^2 to nlogn or something
@@ -48,7 +48,7 @@ class SignalGen:
     #calculates number of samples to delay
     def calculate_channel_shift(self):
         channel_shifts=((self.delays/self.sample_dur))
-        print(channel_shifts)
+        # print(channel_shifts)
         
         return channel_shifts
     def update_delays(self,doa): #doa in degrees, assuming plane wave as it is a far-field source
