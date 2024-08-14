@@ -47,9 +47,9 @@ class ShiftCalc:
             self.gains[i]=1/distance**2
 
 # Speed of sound si 343 m/s
-sampledelay=np.array([[0,0],[0,0.04],[0,0.10],[0,0.12],[0,0.14],[0,0.18],[0.03,0],[0.09,0],[0.15,0],[0.21,0],[0.24,0],[0.24,0.4],[0.24,0.10],[0.24,0.12],[0.24,0.14],[0.24,0.18]]) # Spacing (x,y) in meters 
-sig_gen=ShiftCalc(16,sampledelay)
-sig_gen.update_delays(0) # 0 = +y direction   -90 = +x direction +90 = -x direction
+sampledelay=np.array([[4,6],[5,5],[6,6],[7,7],[8,8],[9,9],[10,10],[9,11]]) # Spacing (x,y) in meters 
+sig_gen=ShiftCalc(8,sampledelay*343/48000)
+sig_gen.update_delays(90) # 0 = +y direction   -90 = +x direction +90 = -x direction
 print(np.round(sig_gen.calculate_channel_shift())) # Relative to the first microphone in the array
 
 

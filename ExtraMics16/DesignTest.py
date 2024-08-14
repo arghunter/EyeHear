@@ -5,7 +5,7 @@ from SignalGen import SignalGen
 from Preprocessor import Preprocessor
 import soundfile as sf
 sampledelay=np.array([[0,0],[0,4],[0,10],[0,12],[0,14],[0,18],[3,0],[9,0],[15,0],[21,0],[24,0],[24,4],[24,10],[24,12],[24,14],[24,18]]) 
-sig=Sine(1500,0.5,48000)
+# sig=Sine(1500,0.5,48000)
 pe=Preprocessor(interpolate=3)
 target_samplerate=48000
 sig_gen=SignalGen(16,sampledelay*343/48000)
@@ -27,20 +27,26 @@ speech2=np.reshape(speech2,(-1,1))
 speech2=interpolator.process(speech2)
 sig_gen.update_delays(0)
 angled_speech=angled_speech[0:min(len(speech),min(len(speech1),len(speech2)))]+sig_gen.delay_and_gain(speech2)[0:min(len(speech),min(len(speech1),len(speech2)))]
-# angled_speech+=0.05*np.random.randn(*angled_speech.shape)
+angled_speech+=0.05*np.random.randn(*angled_speech.shape)
 # samplesdelayed=np.zeros((16,48000*5))
 # for i in range(16):
-    
+# sig_gen=SignalGen(16,sampledelay*343/48000)
+# sig_gen.update_delays(0)
+# angled_speech=sig_gen.delay_and_gain(sig.generate_wave(1))
+# sig=Sine(1600,0.5,48000)
+# sig_gen.update_delays(180)
+# angled_speech+=sig_gen.delay_and_gain(sig.generate_wave(1))[0:48000]
 #     samplesdelayed[i]=np.roll(wave,int(sampledelay[i][0]))
-noise = np.random.normal(0,1,angled_speech.shape)*0.1
-# samplesdelayed+=noise
+# noise = np.random.normal(0,1,angled_speech.shape)*0.1
+# angled_speech+=noise
 samplesdelayed=angled_speech.T
 
 # print(samplesdelayed.dtype)
 write("ExtraMics16/AudioTests/d1b.wav", 48000,samplesdelayed.T)
 samplesmerged=np.zeros((16,198480))
+summed=np.zeros((1,198480))
 for i in range(16):
-    
+    summed+=samplesdelayed[i]
     samplesmerged[0]+=np.roll(samplesdelayed[i],-int(sampledelay[i][0]))# front
     samplesmerged[1]+=np.roll(samplesdelayed[i],int(sampledelay[i][0]))#back
     samplesmerged[2]+=np.roll(samplesdelayed[i],-int(sampledelay[i][1]))# Left (maybe)
@@ -67,17 +73,17 @@ samplesmerged[15]+=np.roll(samplesdelayed[14],int(26))+ samplesdelayed[2]+   np.
 # edge degrre: 2 10 4 11 dist 26 26
 # other edge: 14 2 12 0  dist 26 26
 samplesmerged/=4
-
+summed/=16
 write("ExtraMics16/AudioTests/d1p.wav", 48000,samplesmerged.T)
-samplesmerged/=16
-from sklearn.decomposition import FastICA
-for j in range(15):
-    ica = FastICA(n_components=1, random_state=0)
-    separated_sources = ica.fit_transform(samplesmerged[i:i+2].T).T
-    # separated_sources/=max(separated_sources)
-    for i, source in enumerate(separated_sources):
-        separated_sources[i]/=max(separated_sources[i])
-        sf.write(f'ExtraMics16/AudioTests/separated_source_{i+1}_{j+1}.wav', source, 48000)  # Assuming a sampling rate of 44100 Hz
+# samplesmerged/=16
+# from sklearn.decomposition import FastICA
+# for j in range(15):
+#     ica = FastICA(n_components=1, random_state=0)
+#     separated_sources = ica.fit_transform(samplesmerged[i:i+2].T).T
+#     # separated_sources/=max(separated_sources)
+#     for i, source in enumerate(separated_sources):
+#         separated_sources[i]/=max(separated_sources[i])
+#         sf.write(f'ExtraMics16/AudioTests/separated_source_{i+1}_{j+1}.wav', source, 48000)  # Assuming a sampling rate of 44100 Hz
 # for i, source in enumerate(separated_sources):
 #     plt.figure()
 #     plt.plot(source)
@@ -86,33 +92,46 @@ for j in range(15):
 #     plt.ylabel('Amplitude')
 #     plt.show()
     
-# import numpy as np
-# import matplotlib.pyplot as plt
-# import scipy.fftpack
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy.fftpack
 
 # Number of samplepoints
-# N =int(198480)
-# # sample spacing
-# T = 1.0 / 48000.0
-# x = np.linspace(0.0, N*T, N)
-# y = samplesmerged[3]
-# yf = scipy.fftpack.fft(y)
-# xf = np.linspace(0.0, 1.0/(2.0*T), N//2)
+N =int( 48000)
+# sample spacing
+T = 1.0 / 48000.0
+x = np.linspace(0.0, N*T, N)
+y = summed[0]
+yf = scipy.fftpack.fft(y)
+xf = np.linspace(0.0, 1.0/(2.0*T), N//2)
 
-# fig, ax = plt.subplots()
-# ax.plot(xf[0:4000], (2.0/N * np.abs(yf[:N//2]))[0:4000])
-# plt.show()
-# N =int( 198480)
-# # sample spacing
-# T = 1.0 / 48000.0
-# x = np.linspace(0.0, N*T, N)
-# y = samplesmerged[ 1]
-# yf = scipy.fftpack.fft(y)
-# xf = np.linspace(0.0, 1.0/(2.0*T), N//2)
+fig, ax = plt.subplots()
+ax.plot(xf[0:4000], (2.0/N * np.abs(yf[:N//2]))[0:4000])
+plt.show()
+N =int( 48000)
+# sample spacing
+T = 1.0 / 48000.0
+x = np.linspace(0.0, N*T, N)
+y = samplesmerged[ 3]
+yf = scipy.fftpack.fft(y)
+xf = np.linspace(0.0, 1.0/(2.0*T), N//2)
 
-# fig, ax = plt.subplots()
-# ax.plot(xf[0:4000], (2.0/N * np.abs(yf[:N//2]))[0:4000])
-# plt.show()
+fig, ax = plt.subplots()
+ax.plot(xf[0:4000], (2.0/N * np.abs(yf[:N//2]))[0:4000])
+plt.show()
+
+
+N =int( 48000)
+# sample spacing
+T = 1.0 / 48000.0
+x = np.linspace(0.0, N*T, N)
+y = samplesmerged[ 2]
+yf = scipy.fftpack.fft(y)
+xf = np.linspace(0.0, 1.0/(2.0*T), N//2)
+
+fig, ax = plt.subplots()
+ax.plot(xf[0:4000], (2.0/N * np.abs(yf[:N//2]))[0:4000])
+plt.show()
 # Next steps
 # Next goal: Waht i need is some way to take in the 16 directions and split them voices in real time
 # 
