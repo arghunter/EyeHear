@@ -13,6 +13,7 @@ chunk_size=int(samplerate/100);
 end=chunk_size;
 start=0
 vad=VAD()
+fund=[]
 while end<=len(speech):
 
     if vad.is_speech(speech[start:end]) :
@@ -27,7 +28,7 @@ while end<=len(speech):
         magnitude = 2.0 / N * np.abs(yf[:N // 2])
         peaks, _ = scipy.signal.find_peaks(magnitude)
         first_peak_freq = xf[peaks[0]]
-
+        fund.append(first_peak_freq)
         # Find the multiples of the first peak
         multiples = []
         for multiple in range(2, int(xf[-1] // first_peak_freq) + 1):
@@ -41,7 +42,14 @@ while end<=len(speech):
         for i in multiples:
             magnitude[i]=0
         ax.legend()
-        plt.show()
+        # plt.show()
+    
     end+=chunk_size
     start+=chunk_size
     print(end/len(speech))
+plt.plot(fund)
+plt.title("Array Plot")
+plt.xlabel("Index")
+plt.ylabel("Value")
+plt.grid(True)
+plt.show()
