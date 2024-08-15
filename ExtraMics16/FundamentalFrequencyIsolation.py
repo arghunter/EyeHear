@@ -38,7 +38,8 @@ while end<=len(speech):
         ax.plot(xf, magnitude)
         ax.plot(xf[peaks], magnitude[peaks], 'ro', label='Peaks')
         ax.plot(xf[multiples], magnitude[multiples], 'go', label='Multiples of First Peak')  # Highlight multiples with green x's
-
+        for i in multiples:
+            magnitude[i]=0
         ax.legend()
         plt.show()
     end+=chunk_size
